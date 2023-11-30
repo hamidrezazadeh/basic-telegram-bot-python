@@ -19,7 +19,7 @@ def handle_message(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text=response.choices[0].message['content'])
 
 def main():
-    token = os.environ.get('BOT_TOKEN', 'YOUR_TELEGRAM_BOT_TOKEN')
+    token = os.environ.get('BOT_TOKEN', '6774835592:AAFI-egcgqCttSq5V9W8QHxQAgbf4LY_cMU')
     
     updater = Updater(token=token, use_context=True)
     dispatcher = updater.dispatcher

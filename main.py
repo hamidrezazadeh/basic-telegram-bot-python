@@ -16,8 +16,8 @@ def handle_message(update, context):
 
 def main():
     # Use environment variable for token
-    token = os.environ.get('BOT_TOKEN', 'YOUR_TELEGRAM_BOT_TOKEN')
-    openai.api_key = os.environ.get('OPENAI_API_KEY')  # Set your OpenAI API key
+    token = os.environ.get('BOT_TOKEN', '6774835592:AAFI-egcgqCttSq5V9W8QHxQAgbf4LY_cMU')
+    openai.api_key = os.environ.get('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')  # Set your OpenAI API key
 
     updater = Updater(token=token, use_context=True)
     dispatcher = updater.dispatcher

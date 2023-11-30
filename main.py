@@ -1,18 +1,30 @@
-from telegram.ext import Updater, CommandHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+import openai
 import os
 
-def start(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id, text="Let's build a telegram bot that help people learn English faster")
+def handle_message(update, context):
+    user_message = update.message.text
+
+    # OpenAI API call
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",  # or another model you have access to
+        messages=[{"role": "user", "content": user_message}]
+    )
+
+    # Send the response back to the user
+    context.bot.send_message(chat_id=update.effective_chat.id, text=response.choices[0].message['content'])
 
 def main():
-    # Use environment variable for token for better security; replace with your token for testing
-    token = os.environ.get('BOT_TOKEN', '6774835592:AAFI-egcgqCttSq5V9W8QHxQAgbf4LY_cMU')
+    # Use environment variable for token
+    token = os.environ.get('BOT_TOKEN', 'YOUR_TELEGRAM_BOT_TOKEN')
+    openai.api_key = os.environ.get('OPENAI_API_KEY')  # Set your OpenAI API key
 
     updater = Updater(token=token, use_context=True)
     dispatcher = updater.dispatcher
 
-    start_handler = CommandHandler('start', start)
-    dispatcher.add_handler(start_handler)
+    # Message handler
+    message_handler = MessageHandler(Filters.text & (~Filters.command), handle_message)
+    dispatcher.add_handler(message_handler)
 
     updater.start_polling()
     updater.idle()

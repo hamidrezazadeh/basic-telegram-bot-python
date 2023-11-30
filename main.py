@@ -17,7 +17,7 @@ def handle_message(update, context):
 def main():
     # Use environment variable for token
     token = os.environ.get('BOT_TOKEN', '6774835592:AAFI-egcgqCttSq5V9W8QHxQAgbf4LY_cMU')
-    openai.api_key = os.environ.get('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')  # Set your OpenAI API key
+    openai.api_key = os.environ.get('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')  # Set your OpenAI API key
 
     updater = Updater(token=token, use_context=True)
     dispatcher = updater.dispatcher

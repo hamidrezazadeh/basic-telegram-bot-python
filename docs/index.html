@@ -1,0 +1,1145 @@
+<!doctype html>
+<html lang="fa">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>قهرمان استان‌ها</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Vazirmatn:wght@400;500;700;800&display=swap">
+<style>
+/* Layout: game-show board. Start = title + glowing map; Play = map card beside question card; End = medal + score + review list. */
+:root{
+  --bg:#E6F1EE; --surface:#FFFFFF; --ink:#122927; --muted:#566F6C; --line:#D1E1DD;
+  --land:#CBE0DA; --land-edge:#FFFFFF; --hot:#F0A51C; --hot-edge:#A86A00;
+  --accent:#0A7D78; --accent-ink:#FFFFFF; --accent-soft:#DAEFEA;
+  --good:#1F9255; --good-soft:#DCF2E4; --bad:#CF4036; --bad-soft:#FBE2DE;
+  --gold:#EDA51D; --silver:#9FB0B6; --bronze:#C2783F; --medal-hi:rgba(255,255,255,.55);
+  --f-display:'Lalezar','Vazirmatn',Tahoma,sans-serif;
+  --f-body:'Vazirmatn',Tahoma,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0C1615; --surface:#13201E; --ink:#E6F0EE; --muted:#93AAA6; --line:#243F3A;
+    --land:#25433E; --land-edge:#0C1615; --hot:#F4B53E; --hot-edge:#FFD884;
+    --accent:#3CC3BB; --accent-ink:#04201E; --accent-soft:rgba(60,195,187,.13);
+    --good:#47C47D; --good-soft:rgba(71,196,125,.15); --bad:#F2695E; --bad-soft:rgba(242,105,94,.15);
+    --gold:#F4BF4F; --silver:#C3CED2; --bronze:#DA9259; --medal-hi:rgba(255,255,255,.45);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0C1615; --surface:#13201E; --ink:#E6F0EE; --muted:#93AAA6; --line:#243F3A;
+  --land:#25433E; --land-edge:#0C1615; --hot:#F4B53E; --hot-edge:#FFD884;
+  --accent:#3CC3BB; --accent-ink:#04201E; --accent-soft:rgba(60,195,187,.13);
+  --good:#47C47D; --good-soft:rgba(71,196,125,.15); --bad:#F2695E; --bad-soft:rgba(242,105,94,.15);
+  --gold:#F4BF4F; --silver:#C3CED2; --bronze:#DA9259; --medal-hi:rgba(255,255,255,.45);
+  color-scheme:dark;
+}
+
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.8}
+.app{max-width:68rem;margin:0 auto;padding-block:1.25rem 3rem;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button{font-family:inherit}
+.screen{display:flex;flex-direction:column;gap:1.25rem}
+
+/* shared bits */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;cursor:pointer;
+  font:700 1.05rem/1 var(--f-body);padding:.95rem 1.4rem;border-radius:14px;border:2px solid var(--accent);
+  background:var(--accent);color:var(--accent-ink);transition:transform .12s,filter .15s}
+.btn:hover{filter:brightness(1.07)}
+.btn:active{transform:scale(.97)}
+.btn-ghost{background:transparent;color:var(--accent)}
+.btn-ghost:hover{background:var(--accent-soft);filter:none}
+.btn:focus-visible,.opt:focus-visible,.mode:focus-visible,.icon-btn:focus-visible,.pre:focus-visible,.seg:focus-visible,.fld select:focus-visible{outline:3px solid var(--hot);outline-offset:3px}
+.icon-btn{display:inline-grid;place-items:center;width:2.6rem;height:2.6rem;border-radius:12px;border:1.5px solid var(--line);
+  background:var(--surface);color:var(--muted);cursor:pointer}
+.icon-btn:hover{color:var(--accent);border-color:var(--accent)}
+.icon-btn svg{width:1.3rem;height:1.3rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:22px}
+
+/* map */
+.map{display:block;width:100%;height:auto}
+.map path{fill:var(--land);stroke:var(--land-edge);stroke-width:1.1;stroke-linejoin:round;transition:fill .35s}
+.map path.inrange{fill:color-mix(in srgb,var(--accent) 38%,var(--land))}
+.map path.out{fill-opacity:.4}
+.map path.hot{fill:var(--hot);stroke:var(--hot-edge);stroke-width:1.4}
+.map path.flash{fill:var(--hot)}
+.map .ring{fill:none;stroke:var(--hot);stroke-width:2.5;animation:ring 1.4s ease-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes ring{0%{opacity:1;transform:scale(.6)}100%{opacity:0;transform:scale(1.6)}}
+.map .dot{fill:var(--ink);stroke:var(--surface);stroke-width:2}
+.map .lbl{font:400 22px var(--f-display);fill:var(--ink);stroke:var(--surface);stroke-width:6px;paint-order:stroke;stroke-linejoin:round}
+.map.pulse path.hot{animation:glow 1.6s ease-in-out infinite}
+@keyframes glow{50%{fill-opacity:.7}}
+
+/* start */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:2rem;align-items:center;padding-top:1rem}
+.hero-text{display:flex;flex-direction:column;gap:1rem;min-width:0}
+.eyebrow{margin:0;color:var(--accent);font-weight:700;font-size:.92rem;letter-spacing:.02em}
+h1{margin:0;font:400 clamp(2.6rem,7vw,4.2rem)/1.2 var(--f-display);text-wrap:balance}
+h1 em{font-style:normal;color:var(--hot-edge);background:linear-gradient(transparent 58%,color-mix(in srgb,var(--hot) 40%,transparent) 58%,color-mix(in srgb,var(--hot) 40%,transparent) 84%,transparent 84%);padding:0 .1em}
+.lead{margin:0;color:var(--muted);font-size:1.08rem;max-width:34rem}
+.modes{display:flex;flex-wrap:wrap;gap:.6rem}
+.mode{flex:1 1 11rem;display:flex;flex-direction:column;align-items:flex-start;gap:.15rem;cursor:pointer;text-align:start;
+  padding:.8rem 1rem;border-radius:14px;border:2px solid var(--line);background:var(--surface);color:var(--ink)}
+.mode b{font:400 1.35rem/1.3 var(--f-display)}
+.mode span{color:var(--muted);font-size:.85rem}
+.mode[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.mode[aria-pressed="true"] b{color:var(--accent)}
+.range{display:flex;flex-direction:column;gap:.75rem;padding:1rem;border-radius:16px;border:2px solid var(--line);background:var(--surface)}
+.range-title{margin:0;font:400 1.3rem/1.3 var(--f-display)}
+.range-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:.6rem}
+.fld{display:flex;flex-direction:column;gap:.3rem;font-size:.85rem;color:var(--muted);min-width:0}
+.fld select{font:700 1rem var(--f-body);color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:.6rem .6rem;width:100%;min-width:0;cursor:pointer}
+.presets,.order{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.pre,.seg{cursor:pointer;font:500 .88rem/1 var(--f-body);padding:.55rem .85rem;border-radius:99px;border:1.5px solid var(--line);background:transparent;color:var(--ink)}
+.pre:hover,.seg:hover{border-color:var(--accent);color:var(--accent)}
+.pre[aria-pressed="true"],.seg[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.order>span{color:var(--muted);font-size:.85rem;margin-inline-end:.2rem}
+.voice{display:flex;flex-direction:column;gap:.7rem}
+.mic{display:flex;align-items:center;justify-content:center;gap:.7rem;width:100%;padding:1.35rem 1rem;border-radius:18px;border:0;
+  background:var(--accent);color:var(--accent-ink);font:400 1.5rem/1.2 var(--f-display);cursor:pointer;transition:background .2s,transform .12s;
+  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
+.mic.need{background:var(--accent-soft);color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+.mic.on{transform:scale(.98)}
+.mic.wait{background:var(--hot);color:#3a2600;box-shadow:none}
+.mic svg{width:1.8rem;height:1.8rem;flex:none}
+.mic:focus-visible{outline:3px solid var(--hot);outline-offset:3px}
+.mic.on{background:var(--bad);animation:micpulse 1.2s ease-in-out infinite}
+@keyframes micpulse{50%{box-shadow:0 0 0 10px color-mix(in srgb,var(--bad) 22%,transparent)}}
+.v-tip{margin:0;color:var(--muted);font-size:.92rem}
+.v-form{display:flex;gap:.5rem}
+.v-form input{flex:1;min-width:0;font:400 1.5rem/1.3 var(--f-display);padding:.65rem .9rem;border-radius:14px;
+  border:2px solid var(--line);background:var(--bg);color:var(--ink)}
+.v-form input:focus{outline:none;border-color:var(--accent)}
+.v-form input:disabled{opacity:.6}
+.v-form .btn{padding:.8rem 1.1rem}
+.v-msg{margin:0;font-weight:700;color:var(--hot-edge);min-height:1.4em}
+.v-msg:empty{display:none}
+.linkbtn{align-self:flex-start;background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font:500 .9rem var(--f-body);padding:.2rem}
+.linkbtn:focus-visible{outline:3px solid var(--hot);outline-offset:2px}
+.heard{color:var(--muted);font-size:.9rem}
+.range-sum{margin:0;font-size:.95rem}
+.range-sum b{color:var(--accent)}
+.start-row{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem 1rem}
+.start-row .btn{font-size:1.25rem;padding:1.05rem 2.2rem}
+.best{margin:0;color:var(--muted);font-size:.92rem}
+.best b{color:var(--ink)}
+.hero-map{padding:1rem}
+
+/* play: top bar */
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem 1rem}
+.prog{flex:1 1 12rem;display:flex;flex-direction:column;gap:.3rem;min-width:0}
+.prog-txt{font-size:.9rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.prog-txt b{color:var(--ink)}
+.track{height:.6rem;border-radius:99px;background:var(--line);overflow:hidden}
+.track i{display:block;height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,var(--accent),var(--hot));transition:width .4s}
+.chips{display:flex;gap:.5rem;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:.35rem;padding:.4rem .8rem;border-radius:99px;background:var(--surface);
+  border:1.5px solid var(--line);font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.chip svg{width:1.15rem;height:1.15rem}
+.chip.score svg{color:var(--hot)}
+.chip.streak{border-color:var(--hot);color:var(--hot-edge)}
+.chip.streak svg{color:var(--hot)}
+.chip.bump{animation:bump .35s}
+@keyframes bump{50%{transform:scale(1.18)}}
+
+.play-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:1.25rem;align-items:start}
+.map-card{padding:.9rem;position:relative}
+.map-card .map{max-height:62vh}
+.q-card{padding:1.4rem;display:flex;flex-direction:column;gap:1rem}
+.q-label{margin:0;color:var(--muted);font-size:.9rem}
+.q-prov{margin:0;font:400 clamp(2rem,6vw,2.8rem)/1.25 var(--f-display);color:var(--ink)}
+.q-ask{margin:0;font-size:1.15rem;font-weight:700}
+.opts{display:flex;flex-direction:column;gap:.65rem;list-style:none;margin:0;padding:0}
+.opt{width:100%;display:flex;align-items:center;gap:.85rem;cursor:pointer;text-align:start;
+  padding:.85rem 1rem;border-radius:16px;border:2px solid var(--line);background:var(--surface);color:var(--ink);
+  font:400 1.45rem/1.3 var(--f-display);transition:border-color .15s,background .15s,opacity .2s,transform .12s}
+.opt:hover:not([disabled]){border-color:var(--accent);background:var(--accent-soft)}
+.opt:active:not([disabled]){transform:scale(.98)}
+.opt .n{flex:none;display:grid;place-items:center;width:2rem;height:2rem;border-radius:10px;background:var(--accent-soft);
+  color:var(--accent);font:800 .95rem/1 var(--f-body)}
+.opt .mk{margin-inline-start:auto;width:1.6rem;height:1.6rem;display:none}
+.opt[disabled]{cursor:default}
+.opt.right{border-color:var(--good);background:var(--good-soft)}
+.opt.right .n{background:var(--good);color:var(--surface)}
+.opt.right .mk.ok{display:block;color:var(--good)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft);animation:shake .45s}
+.opt.wrong .n{background:var(--bad);color:var(--surface)}
+.opt.wrong .mk.no{display:block;color:var(--bad)}
+.opt.dim{opacity:.45}
+@keyframes shake{20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+
+.fb{display:flex;flex-direction:column;gap:.6rem;padding:1rem 1.1rem;border-radius:16px;animation:rise .3s ease}
+.fb.good{background:var(--good-soft)}
+.fb.bad{background:var(--bad-soft)}
+.fb-head{margin:0;font:400 1.6rem/1.3 var(--f-display)}
+.fb.good .fb-head{color:var(--good)}
+.fb.bad .fb-head{color:var(--bad)}
+.fb-line{margin:0;font-size:1.02rem}
+.fb-line b{font-weight:800}
+.fb-key{margin:0;display:flex;flex-wrap:wrap;gap:.2rem .5rem;align-items:baseline;font-size:.95rem}
+.fb-key span{color:var(--muted);font-size:.82rem}
+.fb-key b{color:var(--accent)}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.next{width:100%}
+
+.plus{position:absolute;top:1rem;inset-inline-start:1rem;font:400 2rem/1 var(--f-display);color:var(--good);pointer-events:none;
+  animation:float 1.1s ease-out forwards}
+@keyframes float{0%{opacity:0;transform:translateY(10px) scale(.8)}20%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-40px)}}
+
+/* end */
+.end{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.25rem;align-items:start}
+.result{padding:1.8rem 1.5rem;display:flex;flex-direction:column;align-items:center;text-align:center;gap:.8rem}
+.medal{width:9.5rem;height:auto;animation:drop .7s cubic-bezier(.2,1.4,.4,1)}
+@keyframes drop{from{opacity:0;transform:translateY(-30px) rotate(-12deg) scale(.7)}to{opacity:1;transform:none}}
+.r-title{margin:0;font:400 2.3rem/1.25 var(--f-display);text-wrap:balance}
+.r-big{margin:0;font-size:1.25rem;font-weight:700;text-wrap:balance}
+.r-big b{font:400 2.4rem/1 var(--f-display);color:var(--accent);padding:0 .1em}
+.r-sub{margin:0;color:var(--muted)}
+.stars{display:flex;gap:.4rem}
+.stars svg{width:2.6rem;height:2.6rem}
+.stars .on{fill:var(--hot);stroke:var(--hot-edge)}
+.stars .off{fill:var(--line);stroke:var(--line)}
+.stats{display:flex;flex-wrap:wrap;justify-content:center;gap:.5rem}
+.new-rec{display:inline-block;padding:.3rem .9rem;border-radius:99px;background:var(--hot);color:#3a2600;font-weight:800;font-size:.9rem}
+.end-btns{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:.4rem}
+.review{padding:1.4rem;display:flex;flex-direction:column;gap:.8rem}
+.review h2{margin:0;font:400 1.6rem/1.3 var(--f-display)}
+.review p{margin:0;color:var(--muted)}
+.rv-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.rv-list li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.1rem 1rem;padding:.7rem 0;border-top:1px solid var(--line)}
+.rv-list li:first-child{border-top:0}
+.rv-p{font-weight:700}
+.rv-c{font:400 1.35rem/1.3 var(--f-display);color:var(--accent);grid-row:span 2;align-self:center}
+.rv-k{color:var(--muted);font-size:.88rem}
+
+/* toast */
+.toast{position:fixed;top:calc(env(safe-area-inset-top,0px) + 14px);left:50%;transform:translateX(-50%);z-index:200;
+  max-width:calc(100% - 32px);display:flex;align-items:center;gap:.6rem;padding:.7rem 1.2rem;border-radius:16px;
+  background:var(--ink);color:var(--bg);font-weight:800;box-shadow:0 10px 30px rgba(0,0,0,.25);animation:toast 2.6s ease forwards}
+.toast svg{width:1.4rem;height:1.4rem;color:var(--hot);flex:none}
+@keyframes toast{0%{opacity:0;transform:translate(-50%,-14px)}10%,85%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-8px)}}
+
+@media (max-width:860px){
+  .hero,.play-grid,.end{grid-template-columns:minmax(0,1fr)}
+  .hero-map{order:-1;padding:.6rem}
+  .hero-map .map{max-height:34vh}
+  .map-card .map{max-height:40vh}
+  .q-card{padding:1.1rem}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition:none!important}
+}
+</style>
+
+<div class="app" dir="rtl" lang="fa">
+
+  <!-- START -->
+  <section class="screen" id="scr-start">
+    <div class="hero">
+      <div class="hero-text">
+        <p class="eyebrow">بازی مرکز استان‌ها · ۳۱ استان</p>
+        <h1>قهرمان <em>استان‌ها</em></h1>
+        <p class="lead">نقشه رو ببین! یا استانو می‌گیم و تو مرکزشو پیدا می‌کنی، یا برعکس. جوابو می‌تونی از بین ۳ گزینه انتخاب کنی یا <b>با صدا بگی</b>. هر جواب درست ۱۰ امتیاز داره و ۳ تا پشت سر هم، کمبو روشن می‌کنه.</p>
+        <div class="range">
+          <p class="range-title">کدوم استان‌ها رو تمرین کنیم؟</p>
+          <div class="range-row">
+            <label class="fld" for="fromSel"><span>از شماره</span><select id="fromSel"></select></label>
+            <label class="fld" for="toSel"><span>تا شماره</span><select id="toSel"></select></label>
+          </div>
+          <div class="presets" role="group" aria-label="انتخاب سریع">
+            <button type="button" class="pre" data-a="1" data-b="31">همه (۱ تا ۳۱)</button>
+            <button type="button" class="pre" data-a="1" data-b="13">هم‌اسم‌ها (۱ تا ۱۳)</button>
+            <button type="button" class="pre" data-a="14" data-b="31">بقیه (۱۴ تا ۳۱)</button>
+          </div>
+          <p class="range-sum" id="rangeSum"></p>
+        </div>
+        <div class="modes" role="group" aria-label="نوع سؤال">
+          <button type="button" class="mode" id="mode-fwd" data-mode="fwd" aria-pressed="true"><b>استان ← مرکز</b><span>استانو می‌گیم، تو مرکزشو بگو</span></button>
+          <button type="button" class="mode" id="mode-rev" data-mode="rev" aria-pressed="false"><b>مرکز ← استان</b><span>شهرو می‌گیم، تو استانشو بگو</span></button>
+        </div>
+        <div class="order" role="group" aria-label="جواب دادن">
+          <span>جواب دادن:</span>
+          <button type="button" class="seg" id="ans-choice" data-ans="choice" aria-pressed="true">با ۳ گزینه</button>
+          <button type="button" class="seg" id="ans-voice" data-ans="voice" aria-pressed="false">با صدا (حرف بزن)</button>
+        </div>
+        <div class="start-row">
+          <button type="button" class="btn" id="startBtn">شروع بازی</button>
+          <button type="button" class="icon-btn snd" aria-label="صدا"></button>
+        </div>
+        <p class="best" id="bestLine" hidden></p>
+      </div>
+      <div class="card hero-map"><svg class="map" id="mapStart" role="img" aria-label="نقشه‌ی استان‌های ایران"></svg></div>
+    </div>
+  </section>
+
+  <!-- PLAY -->
+  <section class="screen" id="scr-play" hidden>
+    <div class="bar">
+      <div class="prog">
+        <span class="prog-txt" id="progTxt"></span>
+        <div class="track" role="progressbar" aria-label="پیشرفت بازی" aria-valuemin="0" id="progBar"><i id="progFill"></i></div>
+      </div>
+      <div class="chips">
+        <span class="chip score" title="امتیاز"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.2 1.3-6.6L2.5 9.3l6.6-.8z"/></svg><span id="scoreTxt">۰</span></span>
+        <span class="chip streak" id="streakChip" title="پشت سر هم" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c1 3.5-1.5 5-1.5 7.5 0 1.4 1 2.5 2.3 2.5 1.6 0 2.4-1.3 2.2-3 2.2 1.8 3.5 4.3 3.5 6.8A6.5 6.5 0 0 1 12 22a6.5 6.5 0 0 1-6.5-6.2C5.5 11 10.5 8.5 12 2z"/></svg><span id="streakTxt"></span></span>
+        <button type="button" class="icon-btn snd" aria-label="صدا"></button>
+      </div>
+    </div>
+    <div class="play-grid">
+      <div class="card map-card"><svg class="map pulse" id="mapPlay" role="img" aria-label="نقشه؛ استان پرسیده‌شده رنگی است"></svg><div id="plusHost"></div></div>
+      <div class="card q-card">
+        <p class="q-label"><span id="qWhat">استان</span> شماره‌ی <b id="qNum"></b> · <span id="qHint">رنگی روی نقشه</span></p>
+        <p class="q-prov" id="qProv"></p>
+        <p class="q-ask" id="qAsk">مرکزش کدوم شهره؟</p>
+        <ol class="opts" id="opts"></ol>
+        <div class="voice" id="voiceBox" hidden>
+          <button type="button" class="mic" id="micBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span id="micLbl">نگه دار و جوابو بگو</span></button>
+          <p class="v-tip" id="vTip"></p>
+          <form class="v-form" id="vForm" autocomplete="off">
+            <input id="vInput" type="text" enterkeyhint="send" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="جوابو بگو یا بنویس…" aria-label="جواب">
+            <button type="submit" class="btn" id="vSend">بفرست</button>
+          </form>
+          <p class="v-msg" id="vMsg" role="status" aria-live="polite"></p>
+          <button type="button" class="linkbtn" id="dunnoBtn">نمی‌دونم، جوابو نشون بده</button>
+        </div>
+        <div id="fbHost" aria-live="polite"></div>
+        <button type="button" class="btn next" id="nextBtn" hidden>سؤال بعدی</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- END -->
+  <section class="screen" id="scr-end" hidden>
+    <div class="end">
+      <div class="card result">
+        <div id="medalHost"></div>
+        <span class="new-rec" id="newRec" hidden>رکورد جدید!</span>
+        <p class="r-title" id="rTitle"></p>
+        <p class="r-big" id="rBig"></p>
+        <div class="stars" id="stars" aria-hidden="true"></div>
+        <div class="stats" id="stats"></div>
+        <p class="r-sub" id="rSub"></p>
+        <div class="end-btns">
+          <button type="button" class="btn" id="practiceBtn" hidden>اشتباه‌هامو تمرین کنم</button>
+          <button type="button" class="btn btn-ghost" id="againBtn">دوباره همین‌ها</button>
+          <button type="button" class="btn btn-ghost" id="rangeBtn">انتخاب شماره‌های دیگه</button>
+        </div>
+      </div>
+      <div class="card review" id="review">
+        <h2 id="rvTitle"></h2>
+        <p id="rvSub"></p>
+        <ul class="rv-list" id="rvList"></ul>
+      </div>
+    </div>
+  </section>
+
+  <div id="toastHost"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.js"></script>
+<script>
+(function(){
+  var MAP = {"w":500,"h":447,"p":{"سیستان و بلوچستان":"M439.2,295L433.3,302.2L441.1,312.4L444.8,316.3L446,317.1L445.7,319.4L447.3,322.1L447.9,324.2L450.2,327.6L451.2,331L452.9,333.8L455.5,336.3L457.4,338.9L459.7,341L463.5,342.9L466.2,343.3L468,344.2L472.1,345.2L474.7,346.9L475.2,348.3L477.5,350.7L482.5,349.8L482.1,355.4L481.7,358.2L483.3,365.5L483.9,374.3L482.4,378L483.3,378.9L482.8,381.4L484.6,381.4L486.1,382.1L488.5,381L491.3,380.8L492.5,380.3L494.7,381.7L496,384.5L494.7,384.6L493.9,385.6L494,390.9L493.7,393L492.3,393.1L492.8,396.7L492.5,398.7L490,398.7L488.5,399.3L487.3,398.7L483.2,399L481.4,398.9L479.7,400.3L478.7,400L477.6,400.9L475.1,400.9L473.4,401.3L472.9,402.2L470.6,402.6L468.8,406L469.4,406.9L467.5,410.3L465.4,410.1L463.9,408.4L462.8,408.3L462.1,409.8L459.9,410.7L458.5,413.1L458,416.3L458.3,418L457.5,419.1L458.1,423.7L457.9,426L457.1,426.7L455.2,426.1L453.9,429L453.3,439L452.2,443L449.2,443L449,445.2L447.1,446.3L441.4,444.6L441.1,443.4L435.8,441.7L430.2,440.2L426.7,439.8L426.2,435.6L424.2,435L422.9,435.4L421.3,437.1L421.9,439L419,438.3L418.6,436.7L416.5,437L416.4,438.4L414,437.9L413.8,437.1L411.2,436.9L408.4,438L407.2,436.4L403,436.4L401.6,436.6L399.4,435.9L398.2,434.4L396.8,434.1L391.3,435.2L390.9,431.6L391.6,429.4L391,427.7L391.2,426.2L389.7,424.4L386.3,421.1L385.6,419.7L387.5,418.4L387.6,416.8L386.5,415.2L386,412.8L384.2,408.1L382.3,407.4L382.6,405.6L381.5,403.8L383,402.9L385.2,403.3L386.4,401.5L385.6,400.7L386,398.8L385.5,398L385.3,395.4L381.9,393.6L381.7,392.2L383.3,388.1L381.8,385.5L381.2,382.1L381.4,379.5L382.3,373.8L383,371L383.1,367.5L382.7,361.3L383.8,358.9L383.5,357.4L384.1,356.3L384.8,355.6L386.3,354.7L388.8,354.5L389.5,350.7L388.6,349.2L388.6,347.7L386.9,345.7L389.6,344.2L393.8,343.5L398.9,343.9L399.7,343.5L399.4,338.9L399.8,336L399.6,334L398.2,329.2L398.2,328L399.9,325.7L398,320.4L397.3,316.7L397.2,314.8L396.7,303.4L396.5,300.7L397.1,297.7L396.5,290.5L397.6,283.2L397.4,282.4L401.3,280.5L406.9,277.3L409.5,275L409.8,271.5L411,269.9L415.2,269.8L416.5,269.4L417.4,268L418.7,267.1L417.5,263.9L420.6,261.2L427.8,259.3L429.2,258.6L432,256L433.1,253.4L448.2,255.5L454.4,256.6L456.3,258.8L456.2,260.5L457.8,265.5L457.8,268.8L456.5,269.7L456.5,269.9L457,273L456.5,273.3L451.5,279.5Z","تهران":"M204.2,138.6L204,139.3L205.6,142.4L208,145.2L207.9,147.6L207.2,150.1L206.2,151.7L199.5,147.3L197,147.2L196.5,146.2L194.4,144.6L193.2,144.4L188.2,142.7L185,142.2L181.7,143.5L179.9,143.4L178.1,142.5L179.2,140.8L181,134.9L180.8,134.2L179.1,133.2L175.9,133L173,131.5L165.3,130.5L165.6,128.7L166.3,128.3L175.1,126.8L179,126.1L181.6,126.5L182.4,125.7L183.1,125.6L184.4,125.6L183.8,123.8L187.7,119.4L192.1,120.8L191.9,118.5L193.1,116.1L193.2,113.4L195.9,114.6L200.1,116.9L202.6,119.4L203.9,121.6L207.1,123.9L209.3,124.6L212.7,124.5L214.3,123.1L216.9,121.9L219.1,119.6L222.3,119.3L224.7,119.7L230.5,122.5L233,122L234.1,123.1L236.1,123.1L236.5,123.7L234.2,125.6L232.4,127.4L230.3,128.1L227.3,131.3L225.4,130.8L224.2,131.4L221.7,134.7L220.3,135.7L218.2,136.4L216.9,137.5L215.8,136.3L213.9,134.4L208.4,133.1L206.5,130.2L205.2,131L205.2,132.6L204.8,134.9L205.6,136.4Z","یزد":"M271.8,267.5L271.4,268.3L272.4,278.5L272.3,280.4L271.3,282.3L269.9,283.9L267.6,285.3L266.7,286.5L269.3,289.7L271,291.1L272.1,292.7L271.8,298L271.9,302.3L272.4,309.2L270.3,308.7L266.6,309.8L264.1,310L260.8,304.4L260.2,302.4L260.4,299.7L257.6,296.8L256,294.8L254.8,291.8L256.4,288L255.6,284.2L256.4,281.5L256.2,280.5L253.9,278.2L250.8,277.1L244.7,276L244,275.5L242.5,273.3L238.7,271.1L236.1,269.8L231.2,266.6L230.1,263.8L228.4,262L231.1,260.5L231.9,259.1L231.9,257.7L230.7,255.5L229,254.6L227.4,253L230.6,253.1L233.2,252.8L235.3,252L237.7,250.1L237.2,248.8L234.5,246.3L233.5,244.6L232.7,242.2L233.9,236.5L234.1,233.1L234.1,227.7L233.7,224.5L233.1,222.4L237.3,219.2L243.1,217.3L245.9,216.9L249.3,217.3L254.1,217.2L256.5,214L258.3,213L262.3,211.7L264.8,209.6L265.9,206.9L268.7,205.6L272.9,205.1L277.1,205.8L277.8,204.9L278.5,204L281.1,202.4L283.6,204L286.3,200.7L289.7,197.8L293.5,196.8L296.2,199.6L299.1,205.9L300.5,208.1L300.7,209.2L303.9,213.9L305.2,214.9L308.2,215.5L311,217.2L314.4,219.9L316.9,223.5L318.4,225.6L322.9,230.6L326,235.1L324.4,238.2L324.4,240.2L324.5,242.3L323.9,246.5L322.8,246.6L318.9,249.3L315.6,251.2L314.5,251.4L313,251.2L311.9,250.1L310,250.7L309.6,253.1L308,255.2L307.5,256.5L302.8,259.3L298.3,260.8L296,262.4L290.9,264.4L290.6,264.5L287.9,265.6L284.1,266.3L282.5,267L281.6,267.1L276.6,265.8Z","زنجان":"M128.8,82.2L128.8,82.7L132.4,85.9L133.3,87.5L133.5,88.1L134.9,90L135.8,90.3L137.7,93L135.5,94.9L134.5,94.2L133,94.6L132.2,96.9L131.4,97.5L129.9,101.2L131.3,102.2L133.7,104.6L135.9,104.8L138.6,106L141.6,107.7L140.8,109.4L141.9,111.8L141.3,113.6L141.6,115.1L140,117.4L137.9,118.3L135.9,118L134.5,119.6L132.5,119.8L131.9,121.4L128.8,119.7L128.1,118.1L125.2,121L123.7,124.9L123.9,126L124.7,127.2L122.9,131L121.9,129.6L120.1,129.7L117.8,129.6L117.1,128.1L115.7,128.4L112.9,127.3L111.5,125.9L110,125.6L109.7,124L106.6,123.4L105.5,120L104.7,119.7L103.5,120.9L102.1,120.5L101.8,119.5L104.8,118.6L103,117.8L104.3,115.9L105,112.8L103.9,110.8L104.2,109.1L102.5,107.5L99.6,106.3L96.8,106.1L94.2,105L91.5,104.6L90,105.1L89.1,104.4L88.1,100.9L88.1,99.3L86.7,96.6L85.2,95.8L84,93.7L86,91.6L89.2,89.2L90.4,88.7L92.4,87.4L92.9,85.7L94.8,86L95.9,85.1L96.6,84.5L99.4,85.2L99.7,83.5L101.3,82.4L104.3,82.5L105.4,83.8L105.9,83L107.6,82.8L108.9,80.7L113.5,80.2L115.2,79.9L117.5,81.6L117.8,83L119.6,83.9L119.8,84.4L121.9,83.6L124.1,81.9L125.4,83.3L127.1,83.1Z","خوزستان":"M104.9,270.8L97.1,271L96.7,267.9L96.7,255.8L100.1,247.5L101.4,244.3L99.9,242.5L99.9,241.4L98.5,240.3L97.5,238.6L97.4,237.2L96.3,236.5L100.7,233.8L104.4,229.7L104.6,227.9L106,226.9L105.4,222.6L103.8,221.7L102.8,221.1L102.8,219.8L104.7,219.3L104.1,218L106.7,217.6L107.2,217.1L106.2,213.5L107.7,212.6L108.4,210.2L110.2,210.2L111.2,208.6L112.5,207.9L115.2,208.9L117.7,208.9L120.6,208.4L122.4,209.2L123.3,211.1L124.5,210L124.4,208.8L126.2,209.4L127.9,211.3L130.6,210.4L136,212.3L137.1,212L139.8,212.5L141.7,214.7L143.6,216.1L143.2,216.3L144.9,218.8L147.1,221.4L150.7,224.9L151.2,226.2L152.8,227.5L154,228.8L154.5,232.3L156.1,234.3L159.9,237.8L162.1,240.1L163.3,242.4L165.4,244.9L166,246.2L165.6,248.2L167.3,249.3L166.9,250.1L166.1,249.9L165.7,251.7L163.5,253.5L162.5,254.6L162.8,256.1L163.8,257.1L163.1,257.9L161,257.6L160.3,259.3L158.9,259.9L155,260.5L154.8,261.6L155.7,264.1L154.5,265.4L155,267.2L153.2,268.9L154.8,270.1L154.8,271.4L156.5,272.2L158.9,272.7L160.7,271L161.7,271.2L162.2,273.2L162.1,275.1L164.3,276.6L166.1,276.1L166.8,277.9L169.4,279.5L170.1,281.1L168.8,282.2L165.8,282.3L167.5,285L169.3,286.2L169.1,291.4L169.3,292.9L166.7,292.4L163.6,290.9L161.3,289.2L158.8,293.3L157.7,292L156.1,291.5L153.2,292.4L150.5,294.3L144.9,298L143,296.2L143,293.7L142,293.1L139.7,293.1L136.7,293.9L136.5,290.3L135.3,291.7L133.7,290.5L130.6,290L128.2,286.2L126.7,288.6L128.6,291L129,292.7L128.1,297.8L123.1,301.5L120.1,299.7L118.9,299.6L116.3,297.9L116.2,296.3L114.8,294.7L115.2,291.9L111.5,287.8L111,287.8L109.7,288L109.4,285.7L108.1,284.5L104.9,284L104.9,271.3Z","کهگیلویه و بویراحمد":"M180.8,260.4L182.4,262.4L183.3,262L185.5,263.4L186.2,261.6L187.5,261.1L189.8,262.1L189.8,263.9L191.1,268L194.7,271.6L196.7,273L200.2,276.3L201.6,276.8L203.2,278.2L204.2,280.1L202.8,282.2L203.2,284L201.1,286.6L200,286.5L198.4,285.4L197.2,284.5L196.3,285.2L194.9,284.8L193.1,283.8L191.4,283.8L190.5,282.5L190.7,281.2L187.9,279.5L186.8,278.2L185.9,278.4L185,279.9L186.7,283.6L189.1,286.5L187.7,287.5L188.2,289.6L186.2,291.6L183.1,291.9L180.5,293.3L179,297.4L177.9,298.8L173.6,298.1L171.4,299.7L170.7,300.1L169.7,298.9L170.6,293.5L169.3,292.9L169.1,291.4L169.3,286.2L167.5,285L165.8,282.3L168.8,282.2L170.1,281.1L169.4,279.5L166.8,277.9L166.1,276.1L164.3,276.6L162.1,275.1L162.2,273.2L161.7,271.2L160.7,271L158.9,272.7L156.5,272.2L154.8,271.4L154.8,270.1L153.2,268.9L155,267.2L154.5,265.4L155.7,264.1L154.8,261.6L155,260.5L158.9,259.9L160.3,259.3L161,257.6L163.1,257.9L163.8,257.1L162.8,256.1L162.5,254.6L163.5,253.5L165.2,255.2L168.4,255L169.1,254.3L170.9,255.6L173.5,255.5L176.3,258.5L178.2,259.2L179.3,258.7Z","کردستان":"M81.7,110L84.4,110.2L88,109.7L89.7,107.5L89,106L89.1,104.4L90,105.1L91.5,104.6L94.2,105L96.8,106.1L99.6,106.3L102.5,107.5L104.2,109.1L103.9,110.8L105,112.8L104.3,115.9L103,117.8L104.8,118.6L101.8,119.5L102.1,120.5L103.5,120.9L104.7,119.7L105.5,120L106.6,123.4L109.7,124L110,125.6L111.5,125.9L110.7,126.9L108.6,127.3L105.3,129.4L104.7,130.4L102.6,130.3L102.1,130.9L104.3,136L105.9,136.5L107.6,139.6L109.9,142.7L109.3,144.3L110.2,144.8L109.8,147.6L108.5,148.6L106.8,148.7L105.6,148L103.7,148.5L102.9,149.6L101.7,149.9L99.9,148.1L100.9,147.7L98.8,145.8L94.5,145.5L93.5,145.7L90.5,145.8L88.3,147.2L87.3,148.2L88.1,148.9L86.4,149.8L84.9,149.6L83.6,148.6L83.9,150.6L82.4,150.4L81.3,152L82.7,153.4L79.9,155.3L76.6,154.8L73.6,155.3L72.7,153.9L73.1,152.7L70.2,151.4L67.9,149.7L67.1,147.4L66.7,146.6L65.8,146.1L63.5,142.7L59.7,140.5L58.3,139.1L57.5,137.7L56.2,136.7L53.9,132.9L53.7,130.1L54.6,129.7L54.6,127.2L55.2,126.5L58.5,127L59.4,125.9L61.5,125.5L63.1,124L63,123L61.9,122.8L58.6,123.6L57.9,122.2L56.7,121.6L54.9,122.5L51.3,122.7L51.2,123.3L49.4,122.9L48.2,123.5L47.1,121.4L44.2,118.3L42.9,117.5L42.9,115.2L45.4,114.6L45,113.4L46.1,112.4L46.4,110.5L50.2,110.9L52.6,110.4L53.8,109.3L52.9,106L53.7,104.9L56.7,103.9L58.6,103.7L61,105.7L62.3,106.3L64.7,106L65.5,105.2L67.3,105.2L71.1,105.6L73.9,104.6L74.6,104.8L76.8,105.8L77.1,107L78.2,107.9L79.9,107.9Z","لرستان":"M117.2,177.5L118.4,176.2L118.9,174.5L119.3,175.6L121,174.8L122.5,175.3L123.9,174.2L124.8,175.6L126.8,176.7L127.1,177.7L128.5,176.9L129.4,177.6L131.1,177.1L132.4,177.4L131.3,178.8L130.1,178.7L129.1,180.7L130.3,180.7L129.9,184.6L130.4,185.5L130.9,187.2L132,187.4L132.2,186.4L134.9,187L135.8,189.6L137.6,189.8L137.7,188.6L139.1,188.4L139.9,187.1L139.4,185.9L140.5,185.4L141.2,187L144.3,187.1L146.2,185.5L146.6,187L145.7,188.2L147.1,190.1L148.7,190.8L150.1,192.2L151,194.6L154.7,196.1L156.4,196.9L156,198.6L154.6,200L154.6,200.8L153,201.2L152.8,203.9L153.9,204.7L153.7,205.8L151.6,206.2L148.7,205.3L147.4,206.3L147.1,207.6L148.5,208.2L146.7,208.6L148,210.8L149.6,212.1L149.1,213.5L147.4,214.3L145.5,214.1L145.2,215.6L143.6,216.1L141.7,214.7L139.8,212.5L137.1,212L136,212.3L130.6,210.4L127.9,211.3L126.2,209.4L124.4,208.8L124.5,210L123.3,211.1L122.4,209.2L120.6,208.4L117.7,208.9L115.2,208.9L112.5,207.9L111.2,208.6L110.2,210.2L108.4,210.2L107.7,212.6L106.2,213.5L107.2,217.1L106.7,217.6L104.1,218L102.6,216L103.3,215L105.1,214.6L105,213.5L104.8,212.4L102.9,210.5L100.3,208.7L95.7,206.7L92.5,204.6L91.8,203.4L89.8,201.7L85.9,200.4L84.2,198.6L83.2,197.5L79.8,196.2L80.2,195.1L77.4,193.3L75.4,191.2L76,190.2L75.6,189.4L77.8,189L80.4,190.2L80,189L81.3,187L83.5,186.5L86.1,185.3L87.4,186L90,185.6L92.4,181.9L91.8,179.5L92.6,178.5L90.5,175.8L90.7,175.1L92,175.8L93.1,174.2L92.8,173.1L95.3,171L96,170.9L97.5,168.9L97.4,166.4L99.2,167.1L100.8,167.9L102.3,170L106.3,171.2L109.6,175.1L111.2,176.1L112.8,176L113.5,177.3L114.8,177.7Z","مرکزی":"M158.4,160.6L160.2,162.6L159.9,163.5L164,164.7L164.8,164.6L165.5,167.2L167.3,170.1L167.2,171.3L169.3,172L171.7,171L172.5,170L174.7,171.1L175.8,170.9L178.8,171.9L179.6,173.1L182.1,175.7L182.8,177.1L182.2,178.7L182.8,179.6L182.1,184.2L180.2,185.7L178.3,186.6L175.3,186.1L173.8,186L171,188.1L170.7,188.8L167.5,188.8L164.4,189.3L163.8,190.1L161.9,189.7L160.9,191.8L158.1,192.6L156,192.8L155.3,193.6L155.7,195.2L154.7,196.1L151,194.6L150.1,192.2L148.7,190.8L147.1,190.1L145.7,188.2L146.6,187L146.2,185.5L144.3,187.1L141.2,187L140.5,185.4L139.4,185.9L139.9,187.1L139.1,188.4L137.7,188.6L137.6,189.8L135.8,189.6L134.9,187L132.2,186.4L132,187.4L130.9,187.2L130.4,185.5L129.9,184.6L130.3,180.7L129.1,180.7L130.1,178.7L131.3,178.8L132.4,177.4L133.1,177.1L135.3,174.3L133.3,173L133.9,171.7L133.9,170.3L131,168.1L131,166.6L129.4,165.9L131.1,164.4L132,162.7L130.6,159.8L132.3,158.8L132.8,160.2L133.7,159.9L134.1,159L133.3,156.1L133.4,154.7L134.5,153.6L135,151.7L135.8,152.4L139,150.1L140.2,150.3L140.9,148.9L140.9,147.2L138,147.4L137.6,145.8L138.6,145.1L141.4,146.5L142.5,143.8L142.7,142.2L141.5,140.9L140.2,140.4L139.8,138.7L141.7,135.1L143.4,135.9L145.2,135.3L146.5,134.1L148.1,134.1L147.8,131.9L148.5,131.6L151,132.2L152.2,131.4L156.5,132.5L160.9,131.9L162.1,131.4L165.3,130.5L173,131.5L175.9,133L179.1,133.2L180.8,134.2L181,134.9L179.2,140.8L178.1,142.5L175.9,144.7L173.4,146.8L172.8,148.1L173.6,148.9L174,151.1L174,151.6L171,152L169.2,151.7L167.7,152.7L167.1,154.9L164.8,154.9L162.6,153.3L160.2,153.1L159.3,154.7L158.7,157.7L159,158.9Z","مازندران":"M248.7,93.2L248.7,93.2L248.7,93.2ZM248.4,93.2L248.4,93.2L248.4,93.2ZM248.3,91.9L248.3,91.9L248.3,91.9ZM254.1,93.9L254.1,96.9L256.6,97.1L258.3,98L259.2,98.2L261.1,99.7L261.2,102.6L258.7,103.8L256.4,104.2L254.8,106.4L256.6,108L256.5,109.1L255.2,110.7L252.4,112.2L251.3,113.5L249.1,114.7L242.3,115.6L238.2,118.7L238.3,119.8L233.9,120.3L233,122L230.5,122.5L224.7,119.7L222.3,119.3L219.1,119.6L216.9,121.9L214.3,123.1L212.7,124.5L209.3,124.6L207.1,123.9L203.9,121.6L202.6,119.4L200.1,116.9L195.9,114.6L193.2,113.4L190.1,112.9L188,112L186,112.3L181.5,110.1L179.6,109.4L177.8,108.6L178,106.6L176.5,104.4L172.8,102.1L170.8,101.6L169.2,100.2L165.2,98.4L166.6,96.6L167.1,95L167.1,91.9L169.3,90.7L171.3,88.6L175.9,91.4L180,93.8L183.3,95.3L188.8,96.6L193,97.3L196.5,99L199.1,99.7L205.3,100.4L208.2,99.9L211.4,99L218.9,96.9L221.8,96.5L228.5,95.2L232.6,94L236.5,92.8L238.6,92.4L239,92.3L244.5,91.4L250.7,90.7L252.7,90.5L253.1,91.2L250.6,91.6L247.9,91.4L247,92.8L244.5,92.5L245.2,93.2L247.4,93.4L249.1,94.2L249.4,93.5Z","قزوین":"M173.6,114.2L171.6,114.6L170.7,116.3L169,117.3L166.8,117.7L165.8,120.5L164.7,121.8L164.2,122.3L162.9,124.1L162.2,128.4L160.7,128.7L160.6,129.7L162.1,131.4L160.9,131.9L156.5,132.5L152.2,131.4L151,132.2L148.5,131.6L147.8,131.9L148.1,134.1L146.5,134.1L145.2,135.3L143.4,135.9L141.7,135.1L139.2,134.3L138.5,133.6L134.7,132.9L134.1,130.7L127.8,126.7L125.3,125.7L123.9,126L123.7,124.9L125.2,121L128.1,118.1L128.8,119.7L131.9,121.4L132.5,119.8L134.5,119.6L135.9,118L137.9,118.3L140,117.4L141.6,115.1L141.3,113.6L141.9,111.8L140.8,109.4L141.6,107.7L138.6,106L135.9,104.8L133.7,104.6L131.3,102.2L129.9,101.2L131.4,97.5L132.2,96.9L133,94.6L134.5,94.2L135.5,94.9L137.7,93L140.4,96.7L143.3,99.5L146.8,99.5L150.4,100.4L154.3,98.8L157.2,99.3L160.3,97.5L162,97.1L165.2,98.4L169.2,100.2L170.8,101.6L172.8,102.1L176.5,104.4L178,106.6L177.8,108.6L173.1,107.3L171,107.7L169.5,107.2L167,108.2L167.4,110.2L169.9,111.9L171.7,112.6Z","قم":"M175.8,170.9L174.7,171.1L172.5,170L171.7,171L169.3,172L167.2,171.3L167.3,170.1L165.5,167.2L164.8,164.6L164,164.7L159.9,163.5L160.2,162.6L158.4,160.6L159,158.9L158.7,157.7L159.3,154.7L160.2,153.1L162.6,153.3L164.8,154.9L167.1,154.9L167.7,152.7L169.2,151.7L171,152L174,151.6L174,151.1L173.6,148.9L172.8,148.1L173.4,146.8L175.9,144.7L178.1,142.5L179.9,143.4L181.7,143.5L185,142.2L188.2,142.7L193.2,144.4L194.4,144.6L196.5,146.2L197,147.2L199.5,147.3L206.2,151.7L204.8,157.3L202.9,162.6L199.1,162.9L189.7,164.5L187.2,164.3L184.1,165L182.3,165.9L181.6,167L181.5,170.7L179.6,173.1L178.8,171.9Z","سمنان":"M245.9,170.3L235.1,170.2L229.5,170.2L227.8,168.8L222.8,166.1L219.4,165L217.8,164.9L217.5,164.9L213.3,165.7L211.2,165.7L206.9,164.5L202.9,162.6L204.8,157.3L206.2,151.7L207.2,150.1L207.9,147.6L208,145.2L205.6,142.4L204,139.3L204.2,138.6L205.6,136.4L204.8,134.9L205.2,132.6L205.2,131L206.5,130.2L208.4,133.1L213.9,134.4L215.8,136.3L216.9,137.5L218.2,136.4L220.3,135.7L221.7,134.7L224.2,131.4L225.4,130.8L227.3,131.3L230.3,128.1L232.4,127.4L234.2,125.6L236.5,123.7L236.1,123.1L234.1,123.1L233,122L233.9,120.3L238.3,119.8L238.2,118.7L242.3,115.6L249.1,114.7L251.3,113.5L252.4,112.2L255.2,110.7L256.5,109.1L256.6,108L254.8,106.4L256.4,104.2L258.7,103.8L261.2,102.6L266.8,102.1L271.4,101.9L272.6,101.1L274.5,99L275.9,98.6L277.6,99.6L281,97.8L283.3,94.8L286.8,94L290.5,93.6L293.6,93L296.3,90.5L296.7,90.4L297.8,89.8L298.9,85.9L301.1,82.5L301.7,81.1L302.1,79.1L305,77.6L306.7,77.5L306.7,81.2L309.3,80.5L310.6,82.4L309.1,83.9L310.2,84.5L309.5,87.4L308.4,87.8L308.6,90.5L309.5,92.6L312.3,91.4L314.9,90.7L315.5,92.2L318.2,94.8L318.3,97.1L320.4,96.7L322.6,97.5L324.6,97.5L326.6,96.5L328.7,96.5L328.9,99.1L330.9,99.9L331.3,101.4L329.9,103.8L327.1,105.8L329.7,110.4L328.5,112.9L328.4,113.4L327.3,117.7L327.4,121.6L328.6,123.5L332.5,127L335.8,131.6L334.5,133.4L334.5,134.9L335.2,137.3L335.8,137.9L334.4,141.4L333.1,141.2L330.8,141.9L329.4,143.1L328.1,145.1L327,145.9L325.2,145.9L322.3,146.7L319.6,149.2L315,156.4L313.3,158.9L311.2,162.9L309.1,166.2L307.1,170.3L296.5,170.5L296,170.3L282.5,170.4L273.7,170.3L265.2,170.3L262.8,170.3Z","گلستان":"M272.8,73.9L275.1,74.3L278.6,71.6L279.1,69L278.3,68L279.2,65.6L280.4,64.4L282.5,63.4L284.4,61.8L284.6,61L287.9,58.6L288.5,58.8L291.7,57L294.5,54.9L296,55L298.6,54.2L300.7,54.1L304.4,53.6L306.5,54.7L308.5,55.1L313.4,54.7L314.2,55.2L316.6,54.9L317,60L315.8,61.6L314.6,61.6L311.9,68.8L310.6,70.3L310.4,72.3L309,75L309.3,76.5L306.7,77.5L305,77.6L302.1,79.1L301.7,81.1L301.1,82.5L298.9,85.9L297.8,89.8L296.7,90.4L296.3,90.5L293.6,93L290.5,93.6L286.8,94L283.3,94.8L281,97.8L277.6,99.6L275.9,98.6L274.5,99L272.6,101.1L271.4,101.9L266.8,102.1L261.2,102.6L261.1,99.7L259.2,98.2L258.3,98L256.6,97.1L254.1,96.9L254.1,93.9L255.9,93.9L258.9,92.9L258.9,88.7L257.4,88.2L257.9,87.5L258.4,86.8L256.4,80.4L255.5,77.1L258.2,77L263.8,77.6L265.6,76.7L268.4,76.4L271.4,74.4ZM253.1,91.2L252.7,90.5L255.7,90.1L258.5,89.2L258.4,90.4Z","همدان":"M109.9,142.7L107.6,139.6L105.9,136.5L104.3,136L102.1,130.9L102.6,130.3L104.7,130.4L105.3,129.4L108.6,127.3L110.7,126.9L111.5,125.9L112.9,127.3L115.7,128.4L117.1,128.1L117.8,129.6L120.1,129.7L121.9,129.6L122.9,131L124.7,127.2L123.9,126L125.3,125.7L127.8,126.7L134.1,130.7L134.7,132.9L138.5,133.6L139.2,134.3L141.7,135.1L139.8,138.7L140.2,140.4L141.5,140.9L142.7,142.2L142.5,143.8L141.4,146.5L138.6,145.1L137.6,145.8L138,147.4L140.9,147.2L140.9,148.9L140.2,150.3L139,150.1L135.8,152.4L135,151.7L134.5,153.6L133.4,154.7L133.3,156.1L134.1,159L133.7,159.9L132.8,160.2L132.3,158.8L130.6,159.8L132,162.7L131.1,164.4L129.4,165.9L131,166.6L131,168.1L133.9,170.3L133.9,171.7L133.3,173L135.3,174.3L133.1,177.1L132.4,177.4L131.1,177.1L129.4,177.6L128.5,176.9L127.1,177.7L126.8,176.7L124.8,175.6L123.9,174.2L122.5,175.3L121,174.8L119.3,175.6L118.9,174.5L118.4,176.2L117.2,177.5L114.8,177.7L113.5,177.3L112.8,176L111.2,176.1L109.6,175.1L106.3,171.2L102.3,170L104.9,165.6L106.1,165.9L107.3,164.7L107.6,162L106.8,159.7L105,160L104.1,159.1L101.7,158.7L101.4,158.1L101.3,154.7L100,152.9L102.8,151L102.9,149.6L103.7,148.5L105.6,148L106.8,148.7L108.5,148.6L109.8,147.6L110.2,144.8L109.3,144.3Z","هرمزگان":"M305.9,399.8L305,399.6L306.1,397.7L306.7,397.9ZM318.4,391.7L319.6,392.1L319.1,392.9L317.3,393.6L317.1,392.6ZM313.2,388.6L314.4,388.3L316.2,389.7L315.8,390.4L313.5,390.8L312.6,393L311.3,394.5L308.5,396.4L307.5,397.6L305.4,396.2L302.9,397.8L300.8,397.7L300,398.5L297.5,399.5L296,400.5L295.1,400.3L290.7,401.9L290.3,398.4L292.8,398.7L296,397.2L298.8,396.3L299.8,394.5L299.8,392.3L300.3,391.1L302.7,389.6L305.2,391.2L307.4,390.8L309,389.6L311.5,388.7ZM339.4,361.2L345.2,361.4L345.2,363.5L346.6,364.4L342.6,367.2L340.7,369.8L340.2,371.1L342.2,370.3L343.7,371.1L342.6,373.5L342.6,376.8L343.1,378.6L345.7,381.1L347.9,382.1L350.5,385.7L353.6,388.1L355.3,390.1L356.8,390.2L360.1,390.9L361.3,392.2L363.1,393.2L364.9,394.9L369.1,395.5L372.4,397.2L375,400.5L377.1,402.1L381.5,403.8L382.6,405.6L382.3,407.4L384.2,408.1L386,412.8L386.5,415.2L387.6,416.8L387.5,418.4L385.6,419.7L386.3,421.1L389.7,424.4L391.2,426.2L391,427.7L391.6,429.4L390.9,431.6L391.3,435.2L388.4,436.2L385.4,435.4L383.4,432.9L380.2,431L377.8,431.4L374.1,430.3L372.7,430.8L369.6,430.5L364.9,431.8L363.4,432L360.7,430.5L359,427.7L356.5,427.7L354.1,429.2L354.2,427.2L353.5,426.2L351.2,426.5L348.8,426L345.2,425.7L342.1,424.6L341.5,420.4L339.5,417.9L339.3,415.5L340.3,413.3L337.8,410.6L337.6,408L336.7,407.3L335.8,404.5L336.5,403.2L336.7,401.2L335.9,396.7L334.8,393.4L333.4,391.3L332.4,389.5L333,388.1L331.8,387.3L329.7,384.4L325.8,383.2L319.8,383.1L319.4,382.6L316.5,382.7L314.2,384L312.3,383.7L311.3,384.8L308.1,386.5L307.9,387.4L303.2,388.1L302.5,389L299.8,388.8L297.9,391.1L297.9,393.8L295.5,395.6L293.2,395.6L292,394.6L289.5,394.9L289,396.3L286,397.4L285.1,398.8L282.8,399.7L279.5,402.7L278.2,403.3L276.4,402.8L273.8,403.2L272.3,400.5L268.5,400.4L265.9,396.5L262.8,397L260.4,396.6L258.3,395.4L256.5,396.5L254,396.9L252,396.5L250.8,397L250.2,396.1L247.5,394.8L244.7,392.2L244.6,389.5L243.1,388.5L241.5,388.1L235.1,385.4L234,385.3L228.4,382.3L227,380.7L225.6,380L228,378.4L229.3,379.2L230.9,378.1L233.3,379.8L235.7,380L241.4,382.4L242.8,384.8L245.2,384.9L246,383.4L248.7,385.3L252.3,386.7L253.6,386.3L256.5,384.3L258.7,381.6L257.2,377.8L260.7,376L266.9,374.3L269.6,374.6L274.9,374.2L277.8,374.7L283,375L287,375.2L290.6,372.8L291.8,371.1L294.9,368.5L295.8,366.1L297.4,365.1L298.3,363.8L296.3,360.4L293.7,358.4L293.8,357.3L294.1,345.2L295.2,341.7L292.8,338.5L290,336.3L289.9,335.6L293.7,336.4L295,337.2L297.1,337.2L300,335.9L303.8,333.7L307.3,332.3L310.4,331.7L310.6,337.8L310,342.1L310,346.7L310.5,349.2L311.6,350.8L313.9,352.5L316.9,353.6L319.3,354.1L325.8,353.8L328.1,350.3L329.3,350L334.2,350.7L334.6,351.3L334.6,358L334.7,358.9ZM257.2,401.1L258.5,401.2L259,403L255.7,402.8L255.3,401.8ZM248,397.4L249.2,398.4L247.6,398.1ZM242.7,394.3L242.7,394.3L242.7,394.3ZM237.1,392.8L238.8,393.4L241.4,393.6L242.2,394.3L240,394.7L238.3,394.3L236.2,393ZM321,385.5L321.9,387L320.2,387L320,386ZM284.7,422.2L284.7,422.2L284.7,422.2ZM272,420.7L271.9,421.6L270.6,421.3ZM269.3,414.7L269.3,414.7L269.3,414.7ZM287.4,411.2L287.4,411.2L287.4,411.2ZM291.7,410.5L291.7,410.5L291.7,410.5ZM271.4,408.8L270.8,410.5L270.3,409.3Z","ایلام":"M67.1,210.7L65.5,209.8L60.8,209L59.2,209.4L56.6,208.7L56,207.7L57.9,205.4L54.9,204.3L55,203.4L56.9,203.8L58.9,201.4L56.4,199.2L55.9,196.8L52.2,194.5L51.2,192.8L50.4,192.7L47.6,189.8L47.5,188.6L45.6,187.1L47.6,186.5L48.7,185.5L50.7,182L52.2,182.3L52.5,181.3L50.1,179.9L50.4,178L51.7,178.6L54.3,178L55.2,176.6L57.2,177.7L60.8,179.1L61.2,178.8L61.5,177.9L66.7,180.6L69.8,182.7L72.6,185.4L74,184.6L76.6,185.5L77.5,184.6L79,185.4L79.4,183.3L80.8,182.6L84.3,183.2L86.9,184L88.2,183.2L89.2,181.2L87.6,178.8L89.5,179.7L90.2,179.1L91.8,179.5L92.4,181.9L90,185.6L87.4,186L86.1,185.3L83.5,186.5L81.3,187L80,189L80.4,190.2L77.8,189L75.6,189.4L76,190.2L75.4,191.2L77.4,193.3L80.2,195.1L79.8,196.2L83.2,197.5L84.2,198.6L85.9,200.4L89.8,201.7L91.8,203.4L92.5,204.6L95.7,206.7L100.3,208.7L102.9,210.5L104.8,212.4L105,213.5L105.1,214.6L103.3,215L102.6,216L104.1,218L104.7,219.3L102.8,219.8L102.8,221.1L103.8,221.7L105.4,222.6L106,226.9L104.6,227.9L104.4,229.7L100.7,233.8L96.3,236.5L94.6,234.1L93.7,234.3L92.8,232.7L93.8,232.1L90.5,227.3L91.2,226.1L89.1,223.6L86.6,222.8L85.7,223.8L83.5,224L81.2,222.5L78.3,219.9L75.2,217.6L72.3,214.2L69.7,213Z","کرمان":"M302.8,259.3L307.5,256.5L308,255.2L309.6,253.1L310,250.7L311.9,250.1L313,251.2L314.5,251.4L315.6,251.2L318.9,249.3L322.8,246.6L323.9,246.5L324.5,242.3L324.4,240.2L326,239.7L331,239L334.5,239.5L337.4,240.8L340.3,241.3L343.2,242.5L346.9,243L353.4,245.4L360,247.4L362.8,248.7L368.1,252.1L371,254.6L372.4,255.8L375.4,259.1L379.7,262.8L384.5,266.2L387,267.5L387.5,270.5L391.7,274.9L394.1,278.4L397.4,282.4L397.6,283.2L396.5,290.5L397.1,297.7L396.5,300.7L396.7,303.4L397.2,314.8L397.3,316.7L398,320.4L399.9,325.7L398.2,328L398.2,329.2L399.6,334L399.8,336L399.4,338.9L399.7,343.5L398.9,343.9L393.8,343.5L389.6,344.2L386.9,345.7L388.6,347.7L388.6,349.2L389.5,350.7L388.8,354.5L386.3,354.7L384.8,355.6L384.1,356.3L383.5,357.4L383.8,358.9L382.7,361.3L383.1,367.5L383,371L382.3,373.8L381.4,379.5L381.2,382.1L381.8,385.5L383.3,388.1L381.7,392.2L381.9,393.6L385.3,395.4L385.5,398L386,398.8L385.6,400.7L386.4,401.5L385.2,403.3L383,402.9L381.5,403.8L377.1,402.1L375,400.5L372.4,397.2L369.1,395.5L364.9,394.9L363.1,393.2L361.3,392.2L360.1,390.9L356.8,390.2L355.3,390.1L353.6,388.1L350.5,385.7L347.9,382.1L345.7,381.1L343.1,378.6L342.6,376.8L342.6,373.5L343.7,371.1L342.2,370.3L340.2,371.1L340.7,369.8L342.6,367.2L346.6,364.4L345.2,363.5L345.2,361.4L339.4,361.2L334.7,358.9L334.6,358L334.6,351.3L334.2,350.7L329.3,350L328.1,350.3L325.8,353.8L319.3,354.1L316.9,353.6L313.9,352.5L311.6,350.8L310.5,349.2L310,346.7L310,342.1L310.6,337.8L310.4,331.7L307.3,332.3L303.8,333.7L300,335.9L297.1,337.2L295,337.2L293.7,336.4L289.9,335.6L289.9,332.3L288.5,330.8L286.4,329.8L284.9,328.6L285,326L285.8,324.3L287.6,322.5L288.2,320.9L286.5,318.7L283.8,316.8L282.3,314.6L279.1,310.4L277.4,309.7L273.2,309.7L272.4,309.2L271.9,302.3L271.8,298L272.1,292.7L271,291.1L269.3,289.7L266.7,286.5L267.6,285.3L269.9,283.9L271.3,282.3L272.3,280.4L272.4,278.5L271.4,268.3L271.8,267.5L276.6,265.8L281.6,267.1L282.5,267L284.1,266.3L287.9,265.6L290.6,264.5L290.9,264.4L296,262.4L298.3,260.8Z","کرمانشاه":"M69.8,182.7L66.7,180.6L61.5,177.9L61.2,178.8L60.8,179.1L57.2,177.7L55.2,176.6L54.3,178L51.7,178.6L50.4,178L50.1,179.9L52.5,181.3L52.2,182.3L50.7,182L48.7,185.5L47.6,186.5L45.6,187.1L43.8,183.6L42.4,182.4L41.2,179.5L40.1,179.8L38.7,178.5L40.2,177.1L40.1,175.7L43,173.2L42.4,171.7L43.3,168.8L42.1,167.2L41,167.6L39.4,164.1L41.3,163.4L41.8,159.7L43.7,161.1L45.9,160.8L47.1,161.5L46.9,159L46.2,156.9L45,155.9L46.3,153.9L45.9,153.2L47.7,152.8L48.6,151.8L48.4,150.4L50.4,150.8L51.1,149.1L51.1,146.6L52.5,146.3L52.3,144.9L53.4,145.5L55.9,146.6L56.1,145.3L57.3,145.4L59.1,144.5L58.2,142.9L59.3,142.1L59,140.9L57.3,140.7L58.3,139.1L59.7,140.5L63.5,142.7L65.8,146.1L66.7,146.6L67.1,147.4L67.9,149.7L70.2,151.4L73.1,152.7L72.7,153.9L73.6,155.3L76.6,154.8L79.9,155.3L82.7,153.4L81.3,152L82.4,150.4L83.9,150.6L83.6,148.6L84.9,149.6L86.4,149.8L88.1,148.9L87.3,148.2L88.3,147.2L90.5,145.8L93.5,145.7L94.5,145.5L98.8,145.8L100.9,147.7L99.9,148.1L101.7,149.9L102.9,149.6L102.8,151L100,152.9L101.3,154.7L101.4,158.1L101.7,158.7L104.1,159.1L105,160L106.8,159.7L107.6,162L107.3,164.7L106.1,165.9L104.9,165.6L102.3,170L100.8,167.9L99.2,167.1L97.4,166.4L97.5,168.9L96,170.9L95.3,171L92.8,173.1L93.1,174.2L92,175.8L90.7,175.1L90.5,175.8L92.6,178.5L91.8,179.5L90.2,179.1L89.5,179.7L87.6,178.8L89.2,181.2L88.2,183.2L86.9,184L84.3,183.2L80.8,182.6L79.4,183.3L79,185.4L77.5,184.6L76.6,185.5L74,184.6L72.6,185.4Z","خراسان شمالی":"M352.3,60L354.8,60.5L355.8,61.6L358.2,61.7L361.1,63.4L365.6,64.8L366.2,66.9L368,67.7L369.4,70.6L369,72.2L369.4,75L368.4,76.3L368.9,77.8L371.1,79.5L370.3,81.1L368.5,81.5L368.3,82.3L366.5,81.9L364.5,85L366.8,85.9L368.1,87.5L367.7,88.6L367.5,89.3L365.2,90.7L363,91.4L362.3,95.5L362.8,97.8L362.1,99.7L359.8,100.2L358.2,99.8L354.4,98.7L351.7,97.3L348.8,95.1L344.4,93.6L340.2,92.4L334.9,91.4L334.1,91.6L329.2,92.8L325.8,94.3L322.6,97.5L320.4,96.7L318.3,97.1L318.2,94.8L315.5,92.2L314.9,90.7L312.3,91.4L309.5,92.6L308.6,90.5L308.4,87.8L309.5,87.4L310.2,84.5L309.1,83.9L310.6,82.4L309.3,80.5L306.7,81.2L306.7,77.5L309.3,76.5L309,75L310.4,72.3L310.6,70.3L311.9,68.8L314.6,61.6L315.8,61.6L317,60L316.6,54.9L317.6,55.1L317.5,52.8L317.7,51.4L319.7,49.7L323.6,49.5L324.4,50.3L326.3,49.3L328.3,48.9L329.2,49.9L332.1,51.1L334.4,51.2L335.5,52L336.6,51.7L338.5,49.3L340.7,49.2L340.9,50.4L342,50.9L342.1,52.7L344.2,54.8L343.5,57.8L347.7,59.9L349.5,59.4Z","خراسان رضوی":"M396.4,79.1L398.6,81.8L400.1,81.5L400.8,83.5L401.9,83.3L404.9,83.7L409.2,86.2L411.6,86.6L413.2,88.1L413.4,89.4L415.4,92.2L417.4,94.4L418.9,97.4L420,98.7L428,98.9L439.8,98.1L441,100.5L440.4,102.3L440.6,105.1L440,105.7L440.4,108.4L442.3,112.1L442.4,113.9L440.7,116.5L440.8,117.8L439.5,118.7L440.9,119.1L441.8,119.5L443.4,123.6L443,125.8L442.2,126.8L443.6,129.1L443.9,131.3L442.6,134.6L441.6,135.6L441.3,137L441.6,138.8L439.1,139.7L439.8,141.3L439,142.5L440.5,143.6L440.2,145.5L438,150.5L438.4,153.3L436.7,156.3L436.3,159L434.7,158.9L434,160.7L430.1,161.9L431,163L432.9,165.4L433,166.6L434.7,168.8L432.5,168.3L428.6,168.3L428.3,169.3L426.2,171.2L425.1,173.3L423.2,175.1L424,177.7L420.6,178L418.9,178.7L416.4,181.1L414.4,181.8L413.3,179.8L411.7,178.8L411,177.6L404,177.6L401,177L399.5,174.6L394.5,174.6L392.4,173.2L389.8,174.2L386.8,174.2L385.2,174.9L381.8,174.1L380.3,175L378.4,174.6L377.3,175.2L376.3,177.1L372.9,174.5L371.3,171.5L369.7,170.4L369,168.5L367,168L365.3,170.3L361.2,170.5L359.2,168.6L357.2,167.7L355.1,167.8L354.2,167.2L352.4,164.9L351.1,162.3L348.8,159.8L352,155.2L354.7,153.2L352.4,150L349.3,147.7L348.8,145.8L342.2,144.8L338,145.7L335,147.5L331.9,148.2L330,149.4L330.6,150.4L327.7,154.3L322.1,156.8L317.9,157L315,156.4L319.6,149.2L322.3,146.7L325.2,145.9L327,145.9L328.1,145.1L329.4,143.1L330.8,141.9L333.1,141.2L334.4,141.4L335.8,137.9L335.2,137.3L334.5,134.9L334.5,133.4L335.8,131.6L332.5,127L328.6,123.5L327.4,121.6L327.3,117.7L328.4,113.4L328.5,112.9L329.7,110.4L327.1,105.8L329.9,103.8L331.3,101.4L330.9,99.9L328.9,99.1L328.7,96.5L326.6,96.5L324.6,97.5L322.6,97.5L325.8,94.3L329.2,92.8L334.1,91.6L334.9,91.4L340.2,92.4L344.4,93.6L348.8,95.1L351.7,97.3L354.4,98.7L358.2,99.8L359.8,100.2L362.1,99.7L362.8,97.8L362.3,95.5L363,91.4L365.2,90.7L367.5,89.3L367.7,88.6L368.1,87.5L366.8,85.9L364.5,85L366.5,81.9L368.3,82.3L368.5,81.5L370.3,81.1L371.1,79.5L368.9,77.8L368.4,76.3L369.4,75L369,72.2L369.4,70.6L368,67.7L369.6,67.9L370.3,68.8L372.7,68.4L373.2,67L374.5,66.3L375.6,67.3L378.6,68.3L380,67.9L380.9,66.4L382.7,67.7L386.7,68.9L391.9,72.4L393.9,71.6L395.1,73L395.5,74.6L394.8,75.2L395.5,78Z","خراسان جنوبی":"M376.3,177.1L377.3,175.2L378.4,174.6L380.3,175L381.8,174.1L385.2,174.9L386.8,174.2L389.8,174.2L392.4,173.2L394.5,174.6L399.5,174.6L401,177L404,177.6L411,177.6L411.7,178.8L413.3,179.8L414.4,181.8L416.4,181.1L418.9,178.7L420.6,178L424,177.7L425.5,183L425,185.8L427.3,190.7L428.1,191.7L434,191.6L435.2,192.4L432.8,193L433.2,195.1L432.2,195.7L427.3,200.9L426,203.8L426.4,204.9L427.3,208L429.3,217L430.9,220.9L431.9,223.4L433.1,230L433.6,231.8L432.2,237L431.9,241.2L431.9,246.7L433.1,253.4L432,256L429.2,258.6L427.8,259.3L420.6,261.2L417.5,263.9L418.7,267.1L417.4,268L416.5,269.4L415.2,269.8L411,269.9L409.8,271.5L409.5,275L406.9,277.3L401.3,280.5L397.4,282.4L394.1,278.4L391.7,274.9L387.5,270.5L387,267.5L384.5,266.2L379.7,262.8L375.4,259.1L372.4,255.8L371,254.6L368.1,252.1L362.8,248.7L360,247.4L353.4,245.4L346.9,243L343.2,242.5L340.3,241.3L337.4,240.8L334.5,239.5L331,239L326,239.7L324.4,240.2L324.4,238.2L326,235.1L322.9,230.6L318.4,225.6L316.9,223.5L314.4,219.9L311,217.2L308.2,215.5L305.2,214.9L303.9,213.9L300.7,209.2L300.5,208.1L299.1,205.9L296.2,199.6L293.5,196.8L296.3,192.2L295.8,177.8L296.2,177.1L296,170.3L296.5,170.5L307.1,170.3L309.1,166.2L311.2,162.9L313.3,158.9L315,156.4L317.9,157L322.1,156.8L327.7,154.3L330.6,150.4L330,149.4L331.9,148.2L335,147.5L338,145.7L342.2,144.8L348.8,145.8L349.3,147.7L352.4,150L354.7,153.2L352,155.2L348.8,159.8L351.1,162.3L352.4,164.9L354.2,167.2L355.1,167.8L357.2,167.7L359.2,168.6L361.2,170.5L365.3,170.3L367,168L369,168.5L369.7,170.4L371.3,171.5L372.9,174.5Z","البرز":"M179,126.1L175.1,126.8L166.3,128.3L165.6,128.7L165.3,130.5L162.1,131.4L160.6,129.7L160.7,128.7L162.2,128.4L162.9,124.1L164.2,122.3L164.7,121.8L165.8,120.5L166.8,117.7L169,117.3L170.7,116.3L171.6,114.6L173.6,114.2L171.7,112.6L169.9,111.9L167.4,110.2L167,108.2L169.5,107.2L171,107.7L173.1,107.3L177.8,108.6L179.6,109.4L181.5,110.1L186,112.3L188,112L190.1,112.9L193.2,113.4L193.1,116.1L191.9,118.5L192.1,120.8L187.7,119.4L183.8,123.8L184.4,125.6L183.1,125.6L182.4,125.7L181.6,126.5Z","اردبیل":"M108.6,21.1L110.5,22.4L110.8,23.3L112.6,23.9L113.5,26.2L113.3,27L111.6,28.3L107.3,28.9L105.3,30.9L106,32.9L107.9,34.2L111.2,35.6L111.3,37.4L112.3,38L113.3,39.3L116.5,39.2L117,40.7L119.8,43.7L119.5,46.3L121,48.4L121.9,48.5L122.1,50.1L122.4,52.7L121.2,53.8L119.8,59.5L119.8,61.9L120.1,63.3L121.7,64L121.3,65.8L120.3,66.3L120.6,67.9L122.3,69.7L122.7,72.2L125.6,75.7L127.1,77L128.2,78L127.9,80.4L128.8,82.2L127.1,83.1L125.4,83.3L124.1,81.9L121.9,83.6L119.8,84.4L119.6,83.9L117.8,83L117.5,81.6L115.2,79.9L113.5,80.2L113.4,79.3L111.3,77.7L110.9,76.5L108.9,75.1L109,73.1L106.6,72.2L106.7,69.7L105.5,69L105.7,67.5L106.9,65.4L108.2,65.1L108.8,63.1L107.2,61.7L105.1,60.6L102.4,61.5L102.1,60.7L103.3,58.9L102.6,57.7L101.4,57.4L100.5,51.7L99.3,49.8L97.8,51.1L95.1,50.8L91.8,51.9L91.5,50.1L88.9,49.9L86.8,48.3L86.8,47.5L88.3,46.7L90,44.8L91.2,42.7L91.9,40.3L93.8,39L93.6,38.1L90.3,36.3L90.7,34L94.4,32.7L93.1,30.7L92.2,30L93.5,28L92.1,27.6L92.8,26.8L92.8,24.8L92.1,23.4L92.6,20.7L91.7,18.9L92.2,18.5L90.3,17.7L90.5,17.1L88.5,14.6L89.9,13.4L92.7,12.4L94.2,11.3L98.6,8.9L99.5,7.7L102.1,7.5L103.8,5.9L106.2,7.6L108.9,10.6L109.9,12.2L113.7,15.5L114.1,16.2L110.2,17.5L108.3,19.1Z","آذربایجان شرقی":"M93.1,30.7L94.4,32.7L90.7,34L90.3,36.3L93.6,38.1L93.8,39L91.9,40.3L91.2,42.7L90,44.8L88.3,46.7L86.8,47.5L86.8,48.3L88.9,49.9L91.5,50.1L91.8,51.9L95.1,50.8L97.8,51.1L99.3,49.8L100.5,51.7L101.4,57.4L102.6,57.7L103.3,58.9L102.1,60.7L102.4,61.5L105.1,60.6L107.2,61.7L108.8,63.1L108.2,65.1L106.9,65.4L105.7,67.5L105.5,69L106.7,69.7L106.6,72.2L109,73.1L108.9,75.1L110.9,76.5L111.3,77.7L113.4,79.3L113.5,80.2L108.9,80.7L107.6,82.8L105.9,83L105.4,83.8L104.3,82.5L101.3,82.4L99.7,83.5L99.4,85.2L96.6,84.5L95.9,85.1L94.8,86L92.9,85.7L92.4,87.4L90.4,88.7L89.2,89.2L86,91.6L84,93.7L83,92.4L80,93.8L79.9,94.8L77.7,94.8L76.2,93.8L76.8,90.6L75.6,89.7L75.2,88L76.1,87.5L74.3,85.9L72,85.3L71.2,85.7L70.5,86.2L66.8,86.8L65.9,86.6L67.1,85.4L66.8,84.4L65.6,84.4L65,85.6L61.3,88.4L59.2,89.3L57.8,86.2L55.5,84.2L53.6,82.5L52.2,82.3L50.2,82.4L47.9,82L48.6,80.5L47.9,79.5L48.8,79.2L50.2,77.2L52.7,76.2L51.3,75.7L49.4,73L47.2,71L46.6,69.7L45.4,68.4L48.8,68.8L49.3,67.4L45.3,64.8L44.3,64.2L40.4,65.2L39,63.1L38.8,60.7L39.3,60L41.4,59.4L41.9,57.4L41.3,53.1L39.5,51.2L37.5,49.7L31.1,49.4L30.9,47.8L30.6,47.2L33.5,44.8L35,44.3L37,42.9L35.1,39.5L34.4,37.4L35.3,35.2L35.1,33.3L35.5,31.1L36.8,30.6L37.5,29.3L38,28.3L40,27.6L42.1,28.5L42.9,28L43.9,29.1L46.2,29L51.6,31.1L52.2,30.5L53.6,31.2L55.2,30.7L57.3,32.2L58.2,32.2L60.3,30.7L62.6,29.9L64.3,30.8L67.3,30.7L69,30.3L71.8,26.9L73.4,26.4L73.6,25.1L75.4,23.2L76.7,22.6L78.1,23.1L80.8,21.4L81,20.1L82.4,18.6L85.1,17.6L87.2,16.2L88.5,14.6L90.5,17.1L90.3,17.7L92.2,18.5L91.7,18.9L92.6,20.7L92.1,23.4L92.8,24.8L92.8,26.8L92.1,27.6L93.5,28L92.2,30Z","آذربایجان غربی":"M25.2,9.4L26.2,10.2L26.1,11.5L27.2,12.5L27.5,14.6L28.9,15.1L31.7,18.2L32.3,21.1L37.5,22.2L37.5,23.5L40.1,25.7L40,27.6L38,28.3L37.5,29.3L36.8,30.6L35.5,31.1L35.1,33.3L35.3,35.2L34.4,37.4L35.1,39.5L37,42.9L35,44.3L33.5,44.8L30.6,47.2L30.9,47.8L31.1,49.4L29.6,50.3L28.4,52.7L28.8,53.4L30.3,53.7L31.3,52.9L31.6,53.8L33.7,53.8L33.3,56.3L29.9,57.8L29.6,59.6L30.9,62.2L33.8,63.5L35,64.8L35.1,66.7L34.4,68L35.7,70.6L35.1,72.4L36.6,75.4L36.1,77L36.3,79L37.5,81.5L39.5,82.8L40.3,84.3L42,84.2L44.2,84.9L44.8,80.9L45.8,78.6L47.9,79.5L48.6,80.5L47.9,82L50.2,82.4L52.2,82.3L53.6,82.5L55.5,84.2L57.8,86.2L59.2,89.3L61.3,88.4L65,85.6L65.6,84.4L66.8,84.4L67.1,85.4L65.9,86.6L66.8,86.8L70.5,86.2L71.2,85.7L72,85.3L74.3,85.9L76.1,87.5L75.2,88L75.6,89.7L76.8,90.6L76.2,93.8L77.7,94.8L79.9,94.8L80,93.8L83,92.4L84,93.7L85.2,95.8L86.7,96.6L88.1,99.3L88.1,100.9L89.1,104.4L89,106L89.7,107.5L88,109.7L84.4,110.2L81.7,110L79.9,107.9L78.2,107.9L77.1,107L76.8,105.8L74.6,104.8L73.9,104.6L71.1,105.6L67.3,105.2L65.5,105.2L64.7,106L62.3,106.3L61,105.7L58.6,103.7L56.7,103.9L53.7,104.9L52.9,106L53.8,109.3L52.6,110.4L50.2,110.9L46.4,110.5L46.1,112.4L45,113.4L45.4,114.6L42.9,115.2L42.9,117.5L39.7,117.7L37.9,118.3L37.3,117.2L38.3,114.9L36.8,113.1L37,111.4L35.4,109.7L36.2,109.3L35.1,108.2L35.7,107.4L34.5,104.5L31.5,105.3L30.6,104.7L29.7,102.3L28.5,100.9L30,99L30.1,97L29.2,95.2L27.8,95L27.1,94L24.6,94.2L24.4,92.9L25.9,91.6L26.1,90.2L25.5,88.7L25.9,86.8L23.8,86.3L22,84L22.9,83.1L22.2,80.5L23.7,79L23.3,78.2L21.2,77L20.9,75.9L19.8,75.9L18.7,74.3L17.7,74L18.4,72.7L18.6,69.4L17.5,68L18.7,66.3L17.9,64.5L16.3,64L15,64.4L13.2,62.1L11,61.1L9.6,61.4L8.6,60.8L9.7,56.9L10.5,56.2L11.7,53.5L12.7,53L12.9,50.3L15.4,48.1L14.5,46.6L14.3,45.9L12.8,46.5L10.8,45.9L11.1,42.4L10.6,38.3L9.6,38L9.5,35.9L10.2,33.3L10.1,32.1L8.8,31.8L8.6,29.7L7.3,27.1L8.2,26.9L7.7,25.3L8.2,23.5L7.1,22.1L5.3,21.2L5.6,18.6L4,16.2L5,15L6.3,15.8L8.4,14.8L10.9,15.8L13.9,14.7L13.5,13L14,12.4L13.9,10.2L15.1,9.1L15.3,6.6L18.7,4L19.8,5.8L20.9,6.1Z","بوشهر":"M188.8,307.2L188.4,309.4L189.3,312.5L190.8,314L192.4,313.8L194.6,314.4L196.6,316.2L197.8,319.4L200.6,323.4L202.4,325.3L201.9,326.7L203.3,328L204.5,331L205.7,332.9L206.8,337.3L207.7,340.9L208.5,345.7L209.8,349.6L210.5,352.8L213.3,356.5L216.1,357.5L219.8,364.7L220.7,368.1L222,370.4L226,372.9L229.5,376.1L230.9,378.1L229.3,379.2L228,378.4L225.6,380L221.6,376.7L223.8,376.3L224,374.6L222.7,374.4L220.4,371.2L217.9,368.8L215.9,368.7L211.9,367L208.1,363L206.9,363L204.6,363.2L201.6,362.8L199.3,363.4L196.8,362.6L195.4,361.5L194.2,361.7L192.7,359.6L191.5,360.2L191,358.2L189.1,357.6L188.2,355.3L188.3,352.9L188.6,351.2L187.6,349.9L185.7,347.5L183.8,343.4L183.3,341.5L183.2,337.9L182.1,333.4L178.5,333.4L176.5,330.4L177.3,328.1L178.6,330.2L179.9,328.6L179.8,326L177.2,324L175.2,324L173.9,324.8L172.8,323.4L173.2,318.5L173,315.5L169,311.2L168.4,309.8L165.3,307.2L164.2,305.6L162.7,303.1L159.6,299.6L160.2,297.4L158.8,293.3L161.3,289.2L163.6,290.9L166.7,292.4L169.3,292.9L170.6,293.5L169.7,298.9L170.7,300.1L171.4,299.7L172.9,300.5L174.2,301.8L173.2,302.1L172.7,303.6L177,304.7L181.5,304.5L182.9,304.8L185.7,306.5ZM164.2,320.1L164,321.8L163.5,319.8ZM165.2,318L165.2,318L165.2,318ZM193.5,363.6L193.5,363.6L193.5,363.6ZM195.6,363L195.6,363L195.6,363ZM193.1,360.9L193.1,360.9L193.1,360.9ZM193.2,362.8L193.2,362.8L193.2,362.8Z","چهارمحال و بختیاری":"M189.3,255.2L189,256.9L190.1,259L189.8,262.1L187.5,261.1L186.2,261.6L185.5,263.4L183.3,262L182.4,262.4L180.8,260.4L179.3,258.7L178.2,259.2L176.3,258.5L173.5,255.5L170.9,255.6L169.1,254.3L168.4,255L165.2,255.2L163.5,253.5L165.7,251.7L166.1,249.9L166.9,250.1L167.3,249.3L165.6,248.2L166,246.2L165.4,244.9L163.3,242.4L162.1,240.1L159.9,237.8L156.1,234.3L154.5,232.3L154,228.8L152.8,227.5L151.2,226.2L150.7,224.9L147.1,221.4L144.9,218.8L143.2,216.3L143.6,216.1L145.2,215.6L145.5,214.1L147.4,214.3L149.1,213.5L153.6,217.5L156.1,219L157.4,219L159.4,218L161.7,219.4L163.4,221.6L165.1,221.6L166.6,220.8L168.7,220.1L169.2,219.1L167.7,217.9L169,216.6L170.5,217L174.7,216.4L175.9,216.9L177.8,216.5L179.4,217.9L180,220.1L181.4,221.4L181.6,222.4L180.9,224.9L181,226.2L182.5,227.5L185.1,229.2L186.4,231.1L187.2,232.2L190.4,233.7L191.3,235.8L192.4,237.8L192.4,240.1L191.6,242.3L189.7,242.6L188.8,243.6L191,246.4L189.1,248L188.9,252.5L188.5,253.1L188.1,254.1Z","اصفهان":"M217.5,164.9L217.8,164.9L219.4,165L222.8,166.1L227.8,168.8L229.5,170.2L235.1,170.2L245.9,170.3L262.8,170.3L265.2,170.3L273.7,170.3L282.5,170.4L296,170.3L296.2,177.1L295.8,177.8L296.3,192.2L293.5,196.8L289.7,197.8L286.3,200.7L283.6,204L281.1,202.4L278.5,204L277.8,204.9L277.1,205.8L272.9,205.1L268.7,205.6L265.9,206.9L264.8,209.6L262.3,211.7L258.3,213L256.5,214L254.1,217.2L249.3,217.3L245.9,216.9L243.1,217.3L237.3,219.2L233.1,222.4L233.7,224.5L234.1,227.7L234.1,233.1L233.9,236.5L232.7,242.2L233.5,244.6L234.5,246.3L237.2,248.8L237.7,250.1L235.3,252L233.2,252.8L230.6,253.1L227.4,253L219.9,252.2L216.4,251.1L213.8,248.1L212.2,247.7L210.7,248L209.2,249.1L207.6,251L205.5,255.4L206.4,261.6L206,264L204.8,266.7L204.1,269.3L202.8,271.9L203.5,273.8L202.8,275.8L201.6,276.8L200.2,276.3L196.7,273L194.7,271.6L191.1,268L189.8,263.9L189.8,262.1L190.1,259L189,256.9L189.3,255.2L188.1,254.1L188.5,253.1L188.9,252.5L189.1,248L191,246.4L188.8,243.6L189.7,242.6L191.6,242.3L192.4,240.1L192.4,237.8L191.3,235.8L190.4,233.7L187.2,232.2L186.4,231.1L185.1,229.2L182.5,227.5L181,226.2L180.9,224.9L181.6,222.4L181.4,221.4L180,220.1L179.4,217.9L177.8,216.5L175.9,216.9L174.7,216.4L170.5,217L169,216.6L167.7,217.9L169.2,219.1L168.7,220.1L166.6,220.8L165.1,221.6L163.4,221.6L161.7,219.4L159.4,218L157.4,219L156.1,219L153.6,217.5L149.1,213.5L149.6,212.1L148,210.8L146.7,208.6L148.5,208.2L147.1,207.6L147.4,206.3L148.7,205.3L151.6,206.2L153.7,205.8L153.9,204.7L152.8,203.9L153,201.2L154.6,200.8L154.6,200L156,198.6L156.4,196.9L154.7,196.1L155.7,195.2L155.3,193.6L156,192.8L158.1,192.6L160.9,191.8L161.9,189.7L163.8,190.1L164.4,189.3L167.5,188.8L170.7,188.8L171,188.1L173.8,186L175.3,186.1L178.3,186.6L180.2,185.7L182.1,184.2L182.8,179.6L182.2,178.7L182.8,177.1L182.1,175.7L179.6,173.1L181.5,170.7L181.6,167L182.3,165.9L184.1,165L187.2,164.3L189.7,164.5L199.1,162.9L202.9,162.6L206.9,164.5L211.2,165.7L213.3,165.7Z","فارس":"M244,275.5L244.7,276L250.8,277.1L253.9,278.2L256.2,280.5L256.4,281.5L255.6,284.2L256.4,288L254.8,291.8L256,294.8L257.6,296.8L260.4,299.7L260.2,302.4L260.8,304.4L264.1,310L266.6,309.8L270.3,308.7L272.4,309.2L273.2,309.7L277.4,309.7L279.1,310.4L282.3,314.6L283.8,316.8L286.5,318.7L288.2,320.9L287.6,322.5L285.8,324.3L285,326L284.9,328.6L286.4,329.8L288.5,330.8L289.9,332.3L289.9,335.6L290,336.3L292.8,338.5L295.2,341.7L294.1,345.2L293.8,357.3L293.7,358.4L296.3,360.4L298.3,363.8L297.4,365.1L295.8,366.1L294.9,368.5L291.8,371.1L290.6,372.8L287,375.2L283,375L277.8,374.7L274.9,374.2L269.6,374.6L266.9,374.3L260.7,376L257.2,377.8L258.7,381.6L256.5,384.3L253.6,386.3L252.3,386.7L248.7,385.3L246,383.4L245.2,384.9L242.8,384.8L241.4,382.4L235.7,380L233.3,379.8L230.9,378.1L229.5,376.1L226,372.9L222,370.4L220.7,368.1L219.8,364.7L216.1,357.5L213.3,356.5L210.5,352.8L209.8,349.6L208.5,345.7L207.7,340.9L206.8,337.3L205.7,332.9L204.5,331L203.3,328L201.9,326.7L202.4,325.3L200.6,323.4L197.8,319.4L196.6,316.2L194.6,314.4L192.4,313.8L190.8,314L189.3,312.5L188.4,309.4L188.8,307.2L185.7,306.5L182.9,304.8L181.5,304.5L177,304.7L172.7,303.6L173.2,302.1L174.2,301.8L172.9,300.5L171.4,299.7L173.6,298.1L177.9,298.8L179,297.4L180.5,293.3L183.1,291.9L186.2,291.6L188.2,289.6L187.7,287.5L189.1,286.5L186.7,283.6L185,279.9L185.9,278.4L186.8,278.2L187.9,279.5L190.7,281.2L190.5,282.5L191.4,283.8L193.1,283.8L194.9,284.8L196.3,285.2L197.2,284.5L198.4,285.4L200,286.5L201.1,286.6L203.2,284L202.8,282.2L204.2,280.1L203.2,278.2L201.6,276.8L202.8,275.8L203.5,273.8L202.8,271.9L204.1,269.3L204.8,266.7L206,264L206.4,261.6L205.5,255.4L207.6,251L209.2,249.1L210.7,248L212.2,247.7L213.8,248.1L216.4,251.1L219.9,252.2L227.4,253L229,254.6L230.7,255.5L231.9,257.7L231.9,259.1L231.1,260.5L228.4,262L230.1,263.8L231.2,266.6L236.1,269.8L238.7,271.1L242.5,273.3Z","گیلان":"M127.1,77L125.6,75.7L122.7,72.2L122.3,69.7L120.6,67.9L120.3,66.3L121.3,65.8L121.7,64L120.1,63.3L119.8,61.9L119.8,59.5L121.2,53.8L122.4,52.7L122.1,50.1L121.9,48.5L121,48.4L119.5,46.3L119.8,43.7L120.4,44.9L122.2,45.4L124.6,44.1L127.3,44.2L127,48.6L128.2,57.1L129.2,58.4L129.2,60.8L130.1,63.7L132.4,67.2L135.4,69.9L135.8,70.2L140.1,72.5L143.7,73.2L147.8,73.7L148.5,73.8L152,74.1L153.3,73.7L154.5,73.4L155.5,74.8L160.6,75.7L161.5,76.7L161.7,78.5L163,81.3L164.2,83.6L168.3,86.9L171.3,88.6L169.3,90.7L167.1,91.9L167.1,95L166.6,96.6L165.2,98.4L162,97.1L160.3,97.5L157.2,99.3L154.3,98.8L150.4,100.4L146.8,99.5L143.3,99.5L140.4,96.7L137.7,93L135.8,90.3L134.9,90L133.5,88.1L133.3,87.5L132.4,85.9L128.8,82.7L128.8,82.2L127.9,80.4L128.2,78Z"},"d":{"آذربایجان شرقی":[61.3,55],"آذربایجان غربی":[30.2,70.9],"اردبیل":[112.3,49.9],"اصفهان":[198.5,218.3],"البرز":[179.9,122.3],"ایلام":[64.6,188.5],"بوشهر":[177.1,330.5],"تهران":[191.4,126.9],"چهارمحال و بختیاری":[177.9,227.9],"خراسان جنوبی":[391.1,211.7],"خراسان رضوی":[400.8,108.5],"خراسان شمالی":[342.9,73.3],"خوزستان":[122,258.3],"زنجان":[117.2,97.4],"سمنان":[242.4,130.2],"سیستان و بلوچستان":[432.9,313],"فارس":[221.8,310.3],"قزوین":[156,109.4],"قم":[178.4,158.4],"کردستان":[79.4,138.3],"کرمان":[336.5,289.6],"کرمانشاه":[81.2,168.4],"کهگیلویه و بویراحمد":[196.5,277.8],"گلستان":[268.9,92.3],"گیلان":[145.2,79],"لرستان":[114.1,193],"مازندران":[234,100.7],"مرکزی":[148,175],"هرمزگان":[315.9,382.8],"همدان":[118,153.6],"یزد":[267.2,240.8]}};
+
+  var P = [
+    {p:'تهران',c:'تهران',k:['ته + ران = تهران','همه‌چیش تهرانه!','ترافیک = تهران، تهران']},
+    {p:'اصفهان',c:'اصفهان',k:['نصف جهان = اصفهان، اصفهان','دو گاز گز = دو تا اصفهان','کبوتر حواس‌پرت: اصفهان، بازم اصفهان']},
+    {p:'یزد',c:'یزد',k:['یزدِ صرفه‌جو: یه اسم، دو بار','دو چرخ، دو تا یزد','یه زد! = یزد']},
+    {p:'قم',c:'قم',k:['کوتاه‌ترین اسم: قم، قم','سوهان دهنو چسبوند: قم قم','قورباغه: قُم قُم']},
+    {p:'سمنان',c:'سمنان',k:['سه من نان = سمنان','تابلوی کویر: سمنان، سمنان','سُم اسب + نان = سمنان']},
+    {p:'اردبیل',c:'اردبیل',k:['آرد + بیل = اردبیل','سرما اسمو یخ زد: اردبیل، اردبیل','خواب بابا: آرد… بیل…']},
+    {p:'زنجان',c:'زنجان',k:['زن + جان = زنجان','چاقوی زنجان: دو بار زنجان','صدای زنگوله: زن‌جان!']},
+    {p:'قزوین',c:'قزوین',k:['غاز + وین = قزوین','وین نه، قزوین!','باقلوای تنبل: قزوین، قزوین']},
+    {p:'همدان',c:'همدان',k:['همه + دان = همدان','نسخه‌ی بوعلی: همدان','پژواک غار: همدان…']},
+    {p:'کرمان',c:'کرمان',k:['کرمِ مان = کرمان','پسته‌ی خندون: کرمان، کرمان','کرمانِ بی‌تاج = کرمان، کرمان']},
+    {p:'کرمانشاه',c:'کرمانشاه',k:['کرم + شاه = کرمانشاه','شاه سنگی طاق‌بستان توی کرمانشاه','کرمان + شاه = کرمانشاه']},
+    {p:'ایلام',c:'ایلام',k:['سلام ↔ ایلام','حضور غیاب: ایلام دو بار حاضر','عروس زاگرس عاشق اسمشه']},
+    {p:'بوشهر',c:'بوشهر',k:['بو + شهر = بوشهر','گرما اسما رو چسبوند: بوشهر، بوشهر','ملوان: بوی شهر میاد!']},
+    {p:'فارس',c:'شیراز',k:['شیر + راز = شیراز','شیری که فارسی یاد گرفت: شیراز','فال حافظ: شیر + راز = شیراز']},
+    {p:'خراسان رضوی',c:'مشهد',k:['مش + هِد = مشهد','رضوی = امام رضا = مشهد','مَ + شهد = مشهد']},
+    {p:'خراسان شمالی',c:'بجنورد',k:['به جن ورد = بجنورد','بُزنورد ≈ بجنورد','بجنب، وردار! = بجنورد']},
+    {p:'خراسان جنوبی',c:'بیرجند',k:['زرشک! = بیرجند','بیار + چند ≈ بیرجند','بیرون + جن ≈ بیرجند']},
+    {p:'کهگیلویه و بویراحمد',c:'یاسوج',k:['یاس + اوج = یاسوج','اسم دراز، مرکز کوتاه: یاسوج','بوی احمد = بوی یاس = یاسوج']},
+    {p:'چهارمحال و بختیاری',c:'شهرکرد',k:['چهار محل رو «شهر کرد»','بختیار، محله‌ها رو شهر کرد','پنگوئن «شهر» پیدا «کرد»']},
+    {p:'کردستان',c:'سنندج',k:['سنجد نه، سنندج!','ریتم رقص کُردی: سَ-نَن-دَج','سیب، نون، نارنگی، دوغ، جوجه = سنندج']},
+    {p:'گلستان',c:'گرگان',k:['گرگ‌ها توی گلستان = گرگان','گرگ کتاب گلستانو دزدید: گرگان','گرگ با دسته‌گل = گرگان']},
+    {p:'مازندران',c:'ساری',k:['دیو مازندران: «ساری!» (Sorry)','پرنده‌ی سار: ساری!','برنج فراری: ساری!']},
+    {p:'گیلان',c:'رشت',k:['رشته − ه = رشت','بارونِ رشته‌رشته = رشت','گیلاس توی آش رشته = رشت']},
+    {p:'لرستان',c:'خرم‌آباد',k:['«خَرَم» + آباد = خرم‌آباد','شاد + آباد = خرم‌آباد','آبشار + خنده = خرم‌آباد']},
+    {p:'مرکزی',c:'اراک',k:['مرکزِ مرکزی = اراک','ربات راک‌رقص = اَ-راک','فرش اراک وسط اتاق']},
+    {p:'آذربایجان شرقی',c:'تبریز',k:['تب + ریز = تبریز','تبو ریز کن = تبریز','مرغ توی کوفته تبریزی']},
+    {p:'آذربایجان غربی',c:'ارومیه',k:['چه آرومیه! = ارومیه','غروب توی غرب، جای آرومیه','سیب ارومیه رو سر نیوتن']},
+    {p:'خوزستان',c:'اهواز',k:['آه + دهن واز = اهواز','خروس خوزستانی: اَه‌واااز! = اهواز','فلافل تند: آه، دهن واز! = اهواز']},
+    {p:'هرمزگان',c:'بندرعباس',k:['بندِ عباس ≈ بندرعباس','خاک قرمز هرمز، عباس توی بندر','ماهی صدا زد: عباس! از بندر']},
+    {p:'سیستان و بلوچستان',c:'زاهدان',k:['رستم زاهد شد = زاهدان','باد سیستان کلاهو برد زاهدان','زاهد + دون = زاهدان']},
+    {p:'البرز',c:'کرج',k:['کرجی − ی = کرج','صدای گاز زدن: کَرَج!','انگشت پا توی کرج، استان البرز']}
+  ];
+  var TOTAL = P.length;
+
+  /* ---------- helpers ---------- */
+  var $ = function(id){ return document.getElementById(id); };
+  var FA = function(n){ return String(n).replace(/\d/g, function(d){ return '۰۱۲۳۴۵۶۷۸۹'[d]; }); };
+  function shuffle(a){ a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function pick(a){ return a[Math.floor(Math.random() * a.length)]; }
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs){ var e = document.createElementNS(SVGNS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); return e; }
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function store(k, v){ try { if (v === undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
+
+  /* ---------- sound ---------- */
+  var soundOn = store('qa-sound') !== false;
+  var ac = null;
+  function audio(){
+    if (!soundOn) return null;
+    try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); return ac; } catch (e) { return null; }
+  }
+  function tone(f, at, dur, type, vol){
+    var a = audio(); if (!a) return;
+    var o = a.createOscillator(), g = a.createGain(), t = a.currentTime + at;
+    o.type = type || 'triangle'; o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol || 0.16, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + dur + 0.05);
+  }
+  var sfx = {
+    good: function(){ tone(660, 0, .14); tone(880, .09, .16); tone(1320, .18, .28, 'triangle', .12); },
+    bad: function(){ tone(230, 0, .16, 'square', .06); tone(170, .14, .3, 'square', .06); },
+    badge: function(){ [988, 1319, 1568, 1976].forEach(function(f, i){ tone(f, i * .07, .18, 'sine', .1); }); },
+    win: function(){ [523, 659, 784, 1047, 784, 1047].forEach(function(f, i){ tone(f, i * .13, i === 5 ? .6 : .2, 'triangle', .15); }); }
+  };
+  var SPK_ON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16.5 9a4 4 0 0 1 0 6"/><path d="M19 6.5a7.5 7.5 0 0 1 0 11"/></svg>';
+  var SPK_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>';
+  function paintSound(){
+    document.querySelectorAll('.snd').forEach(function(b){
+      b.innerHTML = soundOn ? SPK_ON : SPK_OFF;
+      b.setAttribute('aria-label', soundOn ? 'خاموش کردن صدا' : 'روشن کردن صدا');
+      b.setAttribute('aria-pressed', soundOn ? 'true' : 'false');
+    });
+  }
+  document.querySelectorAll('.snd').forEach(function(b){
+    b.addEventListener('click', function(){ soundOn = !soundOn; store('qa-sound', soundOn); paintSound(); if (soundOn) tone(880, 0, .12); });
+  });
+  paintSound();
+
+  /* ---------- confetti ---------- */
+  var COLORS = ['#F0A51C', '#0A7D78', '#3CC3BB', '#E5484D', '#7C5CFF', '#FFD884', '#1F9255'];
+  function boom(power){
+    if (typeof window.confetti !== 'function') return;
+    var c = window.confetti, opt = { colors: COLORS, disableForReducedMotion: true, zIndex: 150 };
+    try {
+      if (power === 'small') { c(Object.assign({ particleCount: 70, spread: 70, startVelocity: 38, origin: { y: .65 } }, opt)); return; }
+      if (power === 'mid') { c(Object.assign({ particleCount: 130, spread: 100, origin: { y: .6 } }, opt)); return; }
+      var end = Date.now() + 2200;
+      (function frame(){
+        c(Object.assign({ particleCount: 6, angle: 60, spread: 60, origin: { x: 0, y: .7 } }, opt));
+        c(Object.assign({ particleCount: 6, angle: 120, spread: 60, origin: { x: 1, y: .7 } }, opt));
+        if (Date.now() < end) requestAnimationFrame(frame);
+      })();
+      c(Object.assign({ particleCount: 180, spread: 140, startVelocity: 50, origin: { y: .45 }, scalar: 1.2 }, opt));
+    } catch (e) {}
+  }
+
+  /* ---------- toast ---------- */
+  var BADGE_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.2 1.3-6.6L2.5 9.3l6.6-.8z"/></svg>';
+  function toast(msg){
+    var host = $('toastHost'); host.innerHTML = '';
+    var t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status');
+    t.innerHTML = BADGE_ICON; var s = document.createElement('span'); s.textContent = msg; t.appendChild(s);
+    host.appendChild(t);
+    setTimeout(function(){ if (t.parentNode) t.parentNode.removeChild(t); }, 2700);
+  }
+
+  /* ---------- maps ---------- */
+  function buildMap(svg){
+    svg.setAttribute('viewBox', '0 0 ' + MAP.w + ' ' + MAP.h);
+    var g = el('g', {}), paths = {};
+    P.forEach(function(x){ var p = el('path', { d: MAP.p[x.p] }); p.dataset.n = x.p; g.appendChild(p); paths[x.p] = p; });
+    var marks = el('g', {});
+    svg.appendChild(g); svg.appendChild(marks);
+    return { svg: svg, paths: paths, marks: marks };
+  }
+  var startMap = buildMap($('mapStart'));
+  var playMap = buildMap($('mapPlay'));
+
+  var flashTimer = null;
+  function startFlash(){
+    if (reduce || flashTimer) return;
+    flashTimer = setInterval(function(){
+      var x = P[range.a - 1 + Math.floor(Math.random() * (range.b - range.a + 1))], p = startMap.paths[x.p];
+      p.classList.add('flash'); setTimeout(function(){ p.classList.remove('flash'); }, 900);
+    }, 450);
+  }
+  function stopFlash(){ clearInterval(flashTimer); flashTimer = null; }
+
+  function highlight(name){
+    var m = playMap; m.marks.innerHTML = '';
+    Object.keys(m.paths).forEach(function(n){ m.paths[n].classList.toggle('hot', n === name); });
+    var hot = m.paths[name];
+    m.svg.appendChild(m.marks); // keep marks on top
+    hot.parentNode.appendChild(hot); // bring province above neighbours so its edge shows
+    var bb; try { bb = hot.getBBox(); } catch (e) { bb = null; }
+    if (bb && Math.max(bb.width, bb.height) < 48) {
+      var r = Math.max(bb.width, bb.height) / 2 + 12;
+      m.marks.appendChild(el('circle', { class: 'ring', cx: bb.x + bb.width / 2, cy: bb.y + bb.height / 2, r: r }));
+    }
+  }
+  function showCity(x){
+    var m = playMap, d = MAP.d[x.p]; m.marks.innerHTML = '';
+    Object.keys(m.paths).forEach(function(n){ m.paths[n].classList.remove('hot'); });
+    m.svg.appendChild(m.marks);
+    if (!d) return;
+    m.marks.appendChild(el('circle', { class: 'ring', cx: d[0], cy: d[1], r: 16 }));
+    m.marks.appendChild(el('circle', { class: 'dot', cx: d[0], cy: d[1], r: 7 }));
+  }
+  function showCapital(x){
+    var d = MAP.d[x.p]; if (!d) return;
+    var m = playMap; m.marks.innerHTML = '';
+    m.marks.appendChild(el('circle', { class: 'dot', cx: d[0], cy: d[1], r: 6 }));
+    var lx = Math.min(Math.max(d[0], 60), MAP.w - 60), ly = d[1] - 14 < 24 ? d[1] + 34 : d[1] - 14;
+    var t = el('text', { class: 'lbl', x: lx, y: ly, 'text-anchor': 'middle' }); t.textContent = x.c;
+    m.marks.appendChild(t);
+  }
+
+  /* ---------- game state ---------- */
+  var NOPT = 3; // always 3 choices
+  var mode = store('qa-mode') === 'rev' ? 'rev' : 'fwd';
+  var ansWay = store('qa-ans') === 'voice' ? 'voice' : 'choice';
+  function setAns(a){
+    ansWay = a; store('qa-ans', a);
+    document.querySelectorAll('[data-ans]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.dataset.ans === a)); });
+    paintBest();
+  }
+  document.querySelectorAll('[data-ans]').forEach(function(b){ b.addEventListener('click', function(){ setAns(b.dataset.ans); }); });
+  var G = null;
+  function setMode(m){
+    mode = m; store('qa-mode', m);
+    document.querySelectorAll('.mode').forEach(function(b){ b.setAttribute('aria-pressed', String(b.dataset.mode === m)); });
+    paintBest();
+  }
+  document.querySelectorAll('.mode').forEach(function(b){ b.addEventListener('click', function(){ setMode(b.dataset.mode); }); });
+  setMode(mode);
+
+  /* range (از شماره … تا شماره …) and question order */
+  var range = store('qa-range');
+  if (!range || !(range.a >= 1 && range.b <= TOTAL && range.a <= range.b)) range = { a: 1, b: TOTAL };
+  function rKey(a, b){ return a + '-' + b; }
+  function bKey(m, a, b, w){ return (m === 'rev' ? 'r:' : '') + rKey(a, b) + (w === 'voice' ? '|v' : ''); }
+  function rangeName(a, b){ return (a === 1 && b === TOTAL) ? 'همه‌ی ۳۱ استان' : 'شماره‌ی ' + FA(a) + ' تا ' + FA(b); }
+  function bests(){
+    var all = store('qa-best2') || {};
+    var old = store('qa-best');
+    if (old && typeof old.c === 'number' && !all[rKey(1, TOTAL)]) all[rKey(1, TOTAL)] = old;
+    return all;
+  }
+  ['fromSel', 'toSel'].forEach(function(id){
+    var sel = $(id);
+    P.forEach(function(x, i){ var o = document.createElement('option'); o.value = i + 1; o.textContent = FA(i + 1) + '. ' + x.p; sel.appendChild(o); });
+  });
+  function setRange(a, b){
+    a = Math.max(1, Math.min(TOTAL, a)); b = Math.max(1, Math.min(TOTAL, b));
+    if (a > b) { var t = a; a = b; b = t; }
+    range = { a: a, b: b }; store('qa-range', range);
+    $('fromSel').value = a; $('toSel').value = b;
+    paintRange();
+  }
+  function paintRange(){
+    var a = range.a, b = range.b, n = b - a + 1, sum = $('rangeSum');
+    sum.innerHTML = '';
+    var nb = document.createElement('b'); nb.textContent = FA(n) + ' استان'; sum.appendChild(nb);
+    sum.append(n === 1 ? ': فقط ' + P[a - 1].p : ': از ' + P[a - 1].p + ' تا ' + P[b - 1].p + ' · سؤال‌ها قاطی پرسیده می‌شن');
+    document.querySelectorAll('.pre').forEach(function(btn){ btn.setAttribute('aria-pressed', String(+btn.dataset.a === a && +btn.dataset.b === b)); });
+    P.forEach(function(x, i){
+      var inside = i >= a - 1 && i <= b - 1;
+      startMap.paths[x.p].classList.toggle('inrange', inside);
+      startMap.paths[x.p].classList.toggle('out', !inside);
+    });
+    paintBest();
+  }
+  $('fromSel').addEventListener('change', function(){ var a = +this.value, b = range.b; if (a > b) b = a; setRange(a, b); });
+  $('toSel').addEventListener('change', function(){ var b = +this.value, a = range.a; if (b < a) a = b; setRange(a, b); });
+  document.querySelectorAll('.pre').forEach(function(btn){ btn.addEventListener('click', function(){ setRange(+btn.dataset.a, +btn.dataset.b); }); });
+
+  function paintBest(){
+    if (!range) return;
+    var b = bests()[bKey(mode, range.a, range.b, ansWay)];
+    var line = $('bestLine');
+    if (b && typeof b.c === 'number') {
+      line.innerHTML = '';
+      line.append('بهترین رکوردت (' + (mode === 'rev' ? 'مرکز ← استان' : 'استان ← مرکز') + (ansWay === 'voice' ? '، با صدا' : '') + '، ' + rangeName(range.a, range.b) + '): ');
+      var s = document.createElement('b'); s.textContent = FA(b.c) + ' از ' + FA(range.b - range.a + 1); line.appendChild(s);
+      line.append('، با ' + FA(b.s) + ' امتیاز');
+      line.hidden = false;
+    } else line.hidden = true;
+  }
+
+  function show(id){
+    ['scr-start', 'scr-play', 'scr-end'].forEach(function(s){ $(s).hidden = s !== id; });
+    if (id === 'scr-start') startFlash(); else stopFlash();
+    window.scrollTo(0, 0);
+  }
+
+  function rangeList(){ var r = []; for (var i = range.a - 1; i < range.b; i++) r.push(i); return r; }
+  function newGame(list, practice){
+    var q = shuffle(list);
+    G = { mode: mode, ans: ansWay, queue: q, qi: 0, score: 0, right: 0, streak: 0, bestStreak: 0, ra: range.a, rb: range.b,
+          pool: rangeList(), wrong: [], practice: !!practice, answered: false, opts: null, half: false };
+    audio();
+    show('scr-play');
+    ask();
+  }
+
+  function optionsFor(i){
+    var me = MAP.d[P[i].p];
+    var others = P.map(function(_, j){ return j; }).filter(function(j){ return j !== i; });
+    others.sort(function(a, b){
+      var da = MAP.d[P[a].p], db = MAP.d[P[b].p];
+      return Math.hypot(da[0] - me[0], da[1] - me[1]) - Math.hypot(db[0] - me[0], db[1] - me[1]);
+    });
+    var near = others.slice(0, 9), chosen = [];
+    var inR = (G.pool || []).filter(function(j){ return j !== i; });
+    var useR = inR.length >= 2 * (NOPT - 1);
+    while (chosen.length < NOPT - 1) {
+      var pool = (useR && Math.random() < .7) ? inR : (Math.random() < .6 ? near : others);
+      var c = pick(pool); if (chosen.indexOf(c) < 0) chosen.push(c);
+    }
+    return shuffle([i].concat(chosen)).map(function(j){ return G.mode === 'rev' ? P[j].p : P[j].c; });
+  }
+
+  var CHECK = '<svg class="mk ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  var CROSS = '<svg class="mk no" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+
+  function paintBar(){
+    var n = G.queue.length;
+    $('progTxt').innerHTML = '';
+    $('progTxt').append('سؤال ');
+    var b = document.createElement('b'); b.textContent = FA(Math.min(G.qi + 1, n)); $('progTxt').appendChild(b);
+    $('progTxt').append(' از ' + FA(n) + (G.practice ? ' (تمرین اشتباه‌ها)' : '') + ' · درست: ' + FA(G.right));
+    $('progFill').style.width = (G.qi / n * 100) + '%';
+    $('progBar').setAttribute('aria-valuemax', n); $('progBar').setAttribute('aria-valuenow', G.qi);
+    $('scoreTxt').textContent = FA(G.score);
+    $('streakChip').hidden = G.streak < 2;
+    $('streakTxt').textContent = FA(G.streak) + ' تا پشت سر هم';
+  }
+
+  function ask(){
+    G.answered = false;
+    var i = G.queue[G.qi], x = P[i];
+    G.opts = optionsFor(i);
+    var rev = G.mode === 'rev';
+    $('qProv').textContent = rev ? x.c : x.p;
+    $('qNum').textContent = FA(i + 1);
+    $('qWhat').textContent = rev ? 'شهر' : 'استان';
+    $('qHint').textContent = rev ? 'نقطه‌ی روی نقشه' : 'رنگی روی نقشه';
+    $('qAsk').textContent = rev ? 'مرکز کدوم استانه؟' : 'مرکزش کدوم شهره؟';
+    if (rev) showCity(x); else highlight(x.p);
+    var ol = $('opts'); ol.innerHTML = '';
+    G.opts.forEach(function(name, k){
+      var li = document.createElement('li');
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.id = 'opt-' + k;
+      b.innerHTML = '<span class="n">' + FA(k + 1) + '</span><span class="t"></span>' + CHECK + CROSS;
+      b.querySelector('.t').textContent = name;
+      b.addEventListener('click', function(){ answer(k); });
+      li.appendChild(b); ol.appendChild(li);
+    });
+    $('fbHost').innerHTML = '';
+    $('nextBtn').hidden = true;
+    var voice = G.ans === 'voice';
+    $('opts').hidden = voice; $('voiceBox').hidden = !voice;
+    if (voice) {
+      stopListening();
+      $('vInput').value = ''; $('vInput').disabled = false; $('vSend').disabled = false; $('micBtn').disabled = false;
+      $('dunnoBtn').hidden = false; vMsg(''); paintVoice();
+      if (keyboardPath()) setTimeout(function(){ try { $('vInput').focus({ preventScroll: true }); } catch (e) {} }, 80);
+    }
+    paintBar();
+    if (window.scrollY > 80) window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+  }
+
+  var PRAISE = ['آفرین!', 'ایول!', 'دمت گرم!', 'عالی بود!', 'گل کاشتی!', 'باریکلا!', 'نابغه‌ای!', 'دقیقاً همینه!'];
+  var OOPS = ['اشکال نداره!', 'ای بابا، نزدیک بود!', 'عیبی نداره، الان یاد گرفتی!', 'دفعه‌ی بعد حتماً!'];
+
+  function keyFor(x){
+    var withCap = x.k.filter(function(k){ return k.indexOf(x.c) >= 0; });
+    return pick(withCap.length ? withCap : x.k);
+  }
+
+  function answer(k, voice){
+    if (!G || G.answered) return;
+    G.answered = true;
+    var i = G.queue[G.qi], x = P[i], rev = G.mode === 'rev', ans = rev ? x.p : x.c, ok = voice ? voice.ok : G.opts[k] === ans;
+    if (voice) {
+      stopListening(); clearTimeout(autoT);
+      $('vInput').disabled = true; $('vSend').disabled = true; $('micBtn').disabled = true; $('dunnoBtn').hidden = true; vMsg('');
+    }
+    var btns = voice ? [] : $('opts').querySelectorAll('.opt');
+    btns.forEach(function(b, j){
+      b.disabled = true;
+      if (G.opts[j] === ans) b.classList.add('right');
+      else if (j === k) b.classList.add('wrong');
+      else b.classList.add('dim');
+    });
+    var gained = 0;
+    if (ok) {
+      G.streak++; G.right++; G.bestStreak = Math.max(G.bestStreak, G.streak);
+      gained = 10 + (G.streak >= 3 ? 5 : 0);
+      G.score += gained;
+      sfx.good(); boom('small');
+      var plus = document.createElement('div'); plus.className = 'plus'; plus.textContent = '+' + FA(gained);
+      $('plusHost').innerHTML = ''; $('plusHost').appendChild(plus);
+      document.querySelector('.chip.score').classList.remove('bump'); void document.body.offsetWidth;
+      document.querySelector('.chip.score').classList.add('bump');
+    } else {
+      G.streak = 0; G.wrong.push(i);
+      sfx.bad();
+    }
+    if (rev) highlight(x.p);
+    showCapital(x);
+
+    var fb = document.createElement('div'); fb.className = 'fb ' + (ok ? 'good' : 'bad');
+    var h = document.createElement('p'); h.className = 'fb-head'; h.textContent = ok ? pick(PRAISE) : pick(OOPS);
+    var line = document.createElement('p'); line.className = 'fb-line';
+    if (x.p === x.c) {
+      line.append('اسم استان و مرکزش یکیه: ');
+      var b1 = document.createElement('b'); b1.textContent = x.c; line.appendChild(b1);
+    } else {
+      if (rev) {
+        line.append('شهر ' + x.c + ' مرکز این استانه: ');
+        var b3 = document.createElement('b'); b3.textContent = x.p; line.appendChild(b3);
+      } else {
+        line.append('مرکز استان ' + x.p + ' می‌شه: ');
+        var b2 = document.createElement('b'); b2.textContent = x.c; line.appendChild(b2);
+      }
+    }
+    if (ok && G.streak >= 3) line.append(' کمبو! +۵ امتیاز اضافه.');
+    var key = document.createElement('p'); key.className = 'fb-key';
+    var ks = document.createElement('span'); ks.textContent = 'رمز یادآوری:';
+    var kb = document.createElement('b'); kb.textContent = keyFor(x);
+    key.appendChild(ks); key.appendChild(kb);
+    fb.appendChild(h);
+    if (voice) {
+      var hv = document.createElement('p'); hv.className = 'fb-line';
+      if (voice.dunno) hv.textContent = 'اشکال نداره، این دفعه یاد بگیر:';
+      else if (ok) {
+        hv.append('تو گفتی: ');
+        var bh = document.createElement('b'); bh.textContent = ans; hv.appendChild(bh);
+        if (vnorm(voice.heard).replace(/ /g, '') !== vnorm(ans).replace(/ /g, '')) {
+          var sh = document.createElement('span'); sh.className = 'heard'; sh.textContent = ' (شنیدم: «' + voice.heard + '»)'; hv.appendChild(sh);
+        }
+      } else hv.textContent = 'شنیدم: «' + voice.heard + '»';
+      fb.appendChild(hv);
+    }
+    fb.appendChild(line); fb.appendChild(key);
+    $('fbHost').innerHTML = ''; $('fbHost').appendChild(fb);
+
+    var last = G.qi === G.queue.length - 1;
+    $('nextBtn').textContent = last ? 'ببین چند تا شد!' : 'سؤال بعدی';
+    $('nextBtn').hidden = false;
+    paintBar();
+    $('progFill').style.width = ((G.qi + 1) / G.queue.length * 100) + '%';
+    setTimeout(function(){ $('nextBtn').focus({ preventScroll: true }); $('nextBtn').scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' }); }, 60);
+
+    // badges
+    var msg = null;
+    if (ok && G.streak === 3) msg = '۳ تا پشت سر هم! کمبو روشن شد';
+    else if (ok && G.streak === 5) msg = '۵ تا پشت سر هم! داغ کردی!';
+    else if (ok && G.streak === 10) msg = '۱۰ تا پشت سر هم! افسانه‌ای!';
+    else if (ok && G.streak === 20) msg = '۲۰ تا پشت سر هم! تو خودت یه نقشه‌ای!';
+    else if (!G.practice && !G.half && G.queue.length >= 8 && G.qi + 1 === Math.ceil(G.queue.length / 2)) { G.half = true; msg = G.queue.length === TOTAL ? 'نصف ایرانو گشتی! ادامه بده' : 'نصف راهو اومدی! ادامه بده'; }
+    if (msg) setTimeout(function(){ toast(msg); sfx.badge(); if (ok && G.streak >= 5) boom('mid'); }, 350);
+  }
+
+  function next(){
+    if (!G || !G.answered) return;
+    G.qi++;
+    if (G.qi >= G.queue.length) finish(); else ask();
+  }
+  $('nextBtn').addEventListener('click', next);
+
+  /* ---------- end ---------- */
+  function starPts(cx, cy, R, r){
+    var s = ''; for (var i = 0; i < 10; i++) { var a = Math.PI / 5 * i - Math.PI / 2, d = i % 2 ? r : R; s += (cx + d * Math.cos(a)).toFixed(1) + ',' + (cy + d * Math.sin(a)).toFixed(1) + ' '; } return s;
+  }
+  function medalSVG(kind){
+    if (kind === 'trophy') {
+      return '<svg class="medal" viewBox="0 0 120 130" aria-hidden="true">'
+        + '<path d="M30 26c-14 0-18 22 4 30" fill="none" stroke="var(--gold)" stroke-width="7" stroke-linecap="round"/>'
+        + '<path d="M90 26c14 0 18 22-4 30" fill="none" stroke="var(--gold)" stroke-width="7" stroke-linecap="round"/>'
+        + '<path d="M30 14h60v20c0 24-13 38-30 40-17-2-30-16-30-40z" fill="var(--gold)"/>'
+        + '<path d="M40 22h8v14c0 10 4 18 10 22-12-2-18-12-18-24z" fill="var(--medal-hi)"/>'
+        + '<rect x="53" y="72" width="14" height="22" fill="var(--gold)"/>'
+        + '<rect x="36" y="94" width="48" height="12" rx="3" fill="var(--hot-edge)"/>'
+        + '<rect x="30" y="106" width="60" height="14" rx="4" fill="var(--ink)"/>'
+        + '<polygon points="' + starPts(60, 40, 13, 5.5) + '" fill="#fff" opacity=".9"/></svg>';
+    }
+    if (kind === 'none') {
+      return '<svg class="medal" viewBox="0 0 120 120" aria-hidden="true"><polygon points="' + starPts(60, 62, 52, 22) + '" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="5" stroke-linejoin="round"/>'
+        + '<path d="M60 92V60M60 74c-10 0-16-6-16-14 10 0 16 6 16 14zM60 68c0-9 6-15 15-15 0 9-6 15-15 15z" fill="var(--good)" stroke="var(--good)" stroke-width="3" stroke-linecap="round"/></svg>';
+    }
+    var col = 'var(--' + kind + ')';
+    return '<svg class="medal" viewBox="0 0 120 140" aria-hidden="true">'
+      + '<path d="M34 0h22l14 44-18 8z" fill="var(--accent)"/><path d="M86 0H64L50 44l18 8z" fill="var(--bad)"/>'
+      + '<circle cx="60" cy="90" r="44" fill="' + col + '"/>'
+      + '<circle cx="60" cy="90" r="34" fill="none" stroke="var(--medal-hi)" stroke-width="4"/>'
+      + '<polygon points="' + starPts(60, 90, 22, 9.5) + '" fill="var(--medal-hi)"/></svg>';
+  }
+  function starsRow(n){
+    var h = '';
+    for (var i = 0; i < 3; i++) h += '<svg viewBox="0 0 50 50"><polygon class="' + (i < n ? 'on' : 'off') + '" stroke-width="2.5" stroke-linejoin="round" points="' + starPts(25, 26, 22, 10) + '"/></svg>';
+    return h;
+  }
+  function chip(text){ var s = document.createElement('span'); s.className = 'chip'; s.textContent = text; return s; }
+
+  function finish(){
+    var n = G.queue.length, c = G.right, ratio = c / n;
+    var kind, title, sub;
+    if (G.practice) {
+      kind = ratio === 1 ? 'gold' : ratio >= .5 ? 'silver' : 'none';
+      title = ratio === 1 ? 'همه رو یاد گرفتی!' : 'تمرین تموم شد!';
+      sub = ratio === 1 ? 'حالا وقتشه یه دور کامل بازی کنی و رکورد بزنی.' : 'هر بار تمرین کنی، تعداد اشتباه‌ها کمتر می‌شه.';
+    } else if (ratio === 1) {
+      kind = 'trophy';
+      if (n === TOTAL) { title = 'قهرمان ایران!'; sub = 'همه‌ی ۳۱ استانو درست گفتی! تو یه نقشه‌ی راه‌رفتنی هستی.'; }
+      else { title = 'همه رو درست گفتی!'; sub = G.rb < TOTAL ? 'حالا چند تا شماره‌ی بعدی رو هم اضافه کن.' : 'حالا وقتشه همه‌ی ۳۱ استانو امتحان کنی.'; }
+    }
+    else if (ratio >= .8) { kind = 'gold'; title = 'مدال طلا!'; sub = 'فقط چند قدم تا قهرمانی مونده.'; }
+    else if (ratio >= .58) { kind = 'silver'; title = 'مدال نقره!'; sub = 'خیلی خوب بود! اشتباه‌ها رو تمرین کن تا طلا بگیری.'; }
+    else if (ratio >= .32) { kind = 'bronze'; title = 'مدال برنز!'; sub = 'شروع خوبی بود. یه دور دیگه بزن، حتماً بهتر می‌شه.'; }
+    else { kind = 'none'; title = 'ستاره‌ی در راه!'; sub = 'هر بار بازی کنی بهتر می‌شی. فیلمای خنده‌دارو یادت باشه!'; }
+
+    $('medalHost').innerHTML = medalSVG(kind);
+    $('rTitle').textContent = title;
+    var big = $('rBig'); big.innerHTML = '';
+    var unit = G.mode === 'rev' ? ' مرکز استان' : ' استان';
+    big.append(G.practice ? 'از ' + FA(n) + ' تا اشتباه قبلی، ' : n === TOTAL ? 'از ' + FA(TOTAL) + unit + '، ' : 'از ' + FA(n) + unit + ' (شماره‌ی ' + FA(G.ra) + ' تا ' + FA(G.rb) + ')، ');
+    var bb = document.createElement('b'); bb.textContent = FA(c); big.appendChild(bb);
+    big.append(' تا رو درست گفتی!');
+    $('stars').innerHTML = starsRow(ratio >= .9 ? 3 : ratio >= .6 ? 2 : ratio >= .3 ? 1 : 0);
+    var st = $('stats'); st.innerHTML = '';
+    st.appendChild(chip('امتیاز: ' + FA(G.score)));
+    st.appendChild(chip('بهترین زنجیره: ' + FA(G.bestStreak)));
+    st.appendChild(chip(G.mode === 'rev' ? 'مرکز ← استان' : 'استان ← مرکز'));
+    st.appendChild(chip(rangeName(G.ra, G.rb)));
+    if (G.ans === 'voice') st.appendChild(chip('با صدا'));
+    $('rSub').textContent = sub;
+
+    var rec = false;
+    if (!G.practice) {
+      var all = bests(), key = bKey(G.mode, G.ra, G.rb, G.ans), best = all[key];
+      if (!best || c > best.c || (c === best.c && G.score > best.s)) { rec = !!best || c > 0; all[key] = { c: c, s: G.score }; store('qa-best2', all); }
+    }
+    $('newRec').hidden = !rec;
+    paintBest();
+
+    $('practiceBtn').hidden = G.wrong.length === 0;
+    $('practiceBtn').textContent = 'اشتباه‌هامو تمرین کنم (' + FA(G.wrong.length) + ')';
+
+    var list = $('rvList'); list.innerHTML = '';
+    var items = G.wrong.length ? G.wrong : [];
+    if (items.length) {
+      $('rvTitle').textContent = 'اینا رو یه بار دیگه ببین';
+      $('rvSub').textContent = 'این استان‌ها رو اشتباه گفتی. رمز یادآوری‌شونو بلند بخون!';
+    } else {
+      $('rvTitle').textContent = 'هیچ اشتباهی نداشتی!';
+      $('rvSub').textContent = 'همه‌ی جواب‌ها درست بود. این هم چند تا رمز یادآوری واسه مرور:';
+      items = shuffle(G.queue).slice(0, 5);
+    }
+    items.forEach(function(i){
+      var x = P[i], li = document.createElement('li');
+      var a = document.createElement('span'); a.className = 'rv-p'; a.textContent = FA(i + 1) + '. استان ' + x.p;
+      var b = document.createElement('span'); b.className = 'rv-c'; b.textContent = x.c;
+      var k = document.createElement('span'); k.className = 'rv-k'; k.textContent = keyFor(x);
+      li.appendChild(a); li.appendChild(b); li.appendChild(k); list.appendChild(li);
+    });
+
+    show('scr-end');
+    $('progFill').style.width = '100%';
+    if (kind === 'trophy' || (G.practice && ratio === 1)) { sfx.win(); boom('big'); }
+    else if (kind === 'gold' || kind === 'silver') { sfx.win(); boom('mid'); }
+    else if (kind === 'bronze') { sfx.badge(); boom('small'); }
+    else sfx.badge();
+  }
+
+  /* ---------- voice answer matching (fuzzy, Persian) ---------- */
+  var ALIAS = {
+    'تهران': ['تهرون'], 'اصفهان': ['اصفهون', 'اصفان'], 'ارومیه': ['اورمیه'], 'بندرعباس': ['بندر عباس'],
+    'خرم‌آباد': ['خرم آباد', 'خرماباد'], 'شهرکرد': ['شهر کرد'],
+    'کهگیلویه و بویراحمد': ['کهگیلویه', 'بویراحمد', 'کهکیلویه'],
+    'سیستان و بلوچستان': ['سیستان', 'بلوچستان', 'سیستان بلوچستان'],
+    'چهارمحال و بختیاری': ['چهارمحال', 'بختیاری', 'چارمحال', 'چهار محال'],
+    'آذربایجان شرقی': ['آذربایجان شرق'], 'آذربایجان غربی': ['آذربایجان غرب'],
+    'خراسان رضوی': ['رضوی'], 'البرز': ['البورز']
+  };
+  var STOP = { 'جواب':1,'جوابش':1,'جوابم':1,'میشه':1,'میشد':1,'میشود':1,'می':1,'شه':1,'هست':1,'است':1,'هستش':1,'استان':1,'استانش':1,
+    'شهر':1,'شهرش':1,'مرکز':1,'مرکزش':1,'اون':1,'اینه':1,'این':1,'به':1,'نظرم':1,'فکر':1,'کنم':1,'من':1,'میگم':1,'آره':1,'اره':1,
+    'بله':1,'خب':1,'دیگه':1,'که':1,'ام':1,'اوم':1,'آقا':1,'اقا':1 };
+  function vnorm(s){
+    return String(s || '').toLowerCase()
+      .replace(/[ً-ٰٟـ]/g, '')
+      .replace(/[يى]/g, 'ی').replace(/ك/g, 'ک').replace(/[ۀة]/g, 'ه').replace(/[أإٱ]/g, 'ا').replace(/ؤ/g, 'و')
+      .replace(/‌/g, ' ').replace(/[^؀-ۿa-z\s]/g, ' ')
+      .replace(/\s+/g, ' ').trim();
+  }
+  var PH = { 'آ':'ا','ع':'ا','ء':'','ئ':'ی','ح':'ه','ط':'ت','ث':'س','ص':'س','ذ':'ز','ض':'ز','ظ':'ز','ژ':'ز','غ':'ق','گ':'ک' };
+  function vphon(s){ return s.replace(/[آعءئحطثصذضظژغگ]/g, function(c){ return PH[c]; }); }
+  function lev(a, b){
+    if (a === b) return 0; if (!a.length) return b.length; if (!b.length) return a.length;
+    var prev = [], cur = [], i, j;
+    for (j = 0; j <= b.length; j++) prev[j] = j;
+    for (i = 1; i <= a.length; i++) {
+      cur = [i];
+      for (j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      prev = cur;
+    }
+    return prev[b.length];
+  }
+  function sim(a, b){ var m = Math.max(a.length, b.length); return m ? 1 - lev(a, b) / m : 0; }
+  function gramsOf(text){
+    var toks = vnorm(text).split(' ').filter(Boolean);
+    var fold = toks.map(function(t){ return t.length > 3 ? t.replace(/ون$/, 'ان') : t; });
+    var kept = toks.filter(function(t){ return !STOP[t]; });
+    var out = {};
+    [toks, fold, kept].forEach(function(list){
+      for (var i = 0; i < list.length; i++) for (var L = 1; L <= 4 && i + L <= list.length; L++) {
+        var g = list.slice(i, i + L).join('');
+        out[g] = 1;
+        if (g.length > 3) { out[g.replace(/(ه|ست|هست|ش)$/, '')] = 1; }
+      }
+    });
+    return { grams: Object.keys(out), all: toks.join(''), allK: kept.join('') };
+  }
+  function formsOf(name){ return [name].concat(ALIAS[name] || []).map(function(f){ return vnorm(f).replace(/ /g, ''); }); }
+  function scoreName(G2, name){
+    var best = 0;
+    formsOf(name).forEach(function(f){
+      var pf = vphon(f);
+      G2.grams.forEach(function(g){ var s = Math.max(sim(g, f), sim(vphon(g), pf)); if (s > best) best = s; });
+      if (f.length >= 3 && (G2.all.indexOf(f) >= 0 || vphon(G2.all).indexOf(pf) >= 0)) best = Math.max(best, .8);
+    });
+    return best;
+  }
+  // texts: list of transcripts (alternatives). names: every possible answer. answer: the right one.
+  function judgeVoice(texts, names, answer){
+    var T = .55, sc = 0, so = 0, other = null, raw = '', heardR = '', heardO = '';
+    texts.forEach(function(t){
+      if (!vnorm(t)) return;
+      if (!raw) raw = String(t).trim();
+      var G2 = gramsOf(t);
+      var c = scoreName(G2, answer);
+      if (c > sc) { sc = c; heardR = String(t).trim(); }
+      names.forEach(function(n){ if (n === answer) return; var s = scoreName(G2, n); if (s > so) { so = s; other = n; heardO = String(t).trim(); } });
+    });
+    var n0 = vnorm(texts.join(' ')).replace(/ /g, '');
+    if (/نمیدونم|نمیدانم|بلدنیستم|نمیدونیم/.test(n0)) return { v: 'dunno', heard: raw };
+    if (!raw) return { v: 'empty' };
+    if ((sc >= T && sc > so + .02) || (sc >= .9 && sc >= so)) return { v: 'right', heard: heardR || raw, score: sc };
+    if (sc < T && so < .65) return { v: 'unclear', heard: raw };
+    if (Math.abs(sc - so) <= .02) return { v: 'vague', heard: raw };
+    return { v: 'wrong', heard: heardO || raw, other: other, score: so };
+  }
+  /* ---------- voice controller: hold the button, speak, let go ---------- */
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  function micPolicyOK(){
+    try { var pp = document.permissionsPolicy || document.featurePolicy; if (pp && typeof pp.allowsFeature === 'function') return pp.allowsFeature('microphone'); } catch (e) {}
+    return true;
+  }
+  var micPolicy = micPolicyOK();     // false inside the claude.ai viewer
+  var micUsable = !!SR;              // this browser can turn speech into text
+  var micPerm = 'unknown';           // 'granted' | 'denied' | 'unknown'
+  try {
+    navigator.permissions.query({ name: 'microphone' }).then(function(st){
+      var map = function(){ micPerm = st.state === 'granted' ? 'granted' : st.state === 'denied' ? 'denied' : 'unknown'; if (G && G.ans === 'voice' && !listening) paintVoice(); };
+      map(); st.onchange = map;
+    }).catch(function(){});
+  } catch (e) {}
+  var rec = null, listening = false, pressing = false, audioOn = false, holdStart = 0, finals = [], recId = 0, autoT = null;
+  var ALLOW_MSG = 'اگه مرورگر اجازه خواست، «Allow while visiting the site» رو بزن. بعد دوباره دکمه رو نگه دار و وقتی قرمز شد حرف بزن.';
+  var BLOCKED_MSG = 'صفحه‌ی Claude به بازی اجازه‌ی میکروفون نمی‌ده. نسخه‌ی وبِ بازی رو باز کن، یا فعلاً از میکروفونِ کیبورد گوشی استفاده کن.';
+  function keyboardPath(){ return !micUsable || !micPolicy || micPerm === 'denied'; }
+  function vMsg(t){ $('vMsg').textContent = t || ''; }
+  function paintVoice(){
+    var mb = $('micBtn');
+    mb.hidden = !micUsable;
+    var needPerm = micPerm !== 'granted';
+    mb.classList.toggle('on', listening && audioOn);
+    mb.classList.toggle('wait', listening && !audioOn);
+    mb.classList.toggle('need', needPerm && !listening);
+    $('micLbl').textContent = listening ? (audioOn ? 'دارم گوش می‌دم… ول کن تا بفرستم' : 'یه لحظه صبر کن…')
+      : needPerm ? 'بزن و اجازه‌ی میکروفون بده' : 'نگه دار و جوابو بگو';
+    $('vTip').textContent = !micUsable ? 'این مرورگر تشخیص صدا نداره. روی میکروفونِ کیبورد گوشی بزن و بگو، یا بنویسش:'
+      : !micPolicy ? 'داخل صفحه‌ی Claude میکروفون بسته‌ست. اینجا از میکروفونِ کیبورد گوشی استفاده کن، یا بنویسش:'
+      : micPerm === 'denied' ? 'اجازه‌ی میکروفون بسته‌ست. از تنظیمات مرورگر اجازه بده، یا از میکروفونِ کیبورد استفاده کن:'
+      : needPerm ? 'یه بار دکمه رو بزن و اجازه‌ی میکروفون بده. بعدش: نگه دار، بگو، ول کن.'
+      : 'دکمه رو نگه دار؛ وقتی قرمز شد جوابو بگو، بعد ول کن. یا بنویسش:';
+  }
+  function stopListening(){
+    recId++;                              // ignore anything the old session still sends
+    if (rec && listening) { try { rec.abort(); } catch (e) {} }
+    listening = false; pressing = false; audioOn = false;
+    if (G && G.ans === 'voice') paintVoice();
+  }
+  function voiceNames(){ return P.map(function(x){ return G.mode === 'rev' ? x.p : x.c; }); }
+  function currentAnswer(){ var x = P[G.queue[G.qi]]; return G.mode === 'rev' ? x.p : x.c; }
+  function tryVoice(texts){
+    if (!G || G.answered || G.ans !== 'voice') return;
+    var r = judgeVoice(texts, voiceNames(), currentAnswer());
+    var what = G.mode === 'rev' ? 'استانه' : 'شهره';
+    if (r.v === 'empty') { vMsg('چیزی نشنیدم. دوباره بگو.'); return; }
+    if (r.v === 'unclear') { vMsg('شنیدم «' + r.heard + '» ولی نفهمیدم کدوم ' + what + '. دوباره واضح‌تر بگو.'); sfx.bad(); return; }
+    if (r.v === 'vague') { vMsg('یه کم دقیق‌تر بگو! «' + r.heard + '» به چند تا جواب می‌خوره.'); return; }
+    answer(-1, { ok: r.v === 'right', heard: r.heard, dunno: r.v === 'dunno' });
+  }
+  function askPermission(){
+    vMsg('');
+    if (!micPolicy) { micPerm = 'denied'; paintVoice(); vMsg(BLOCKED_MSG); return; }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { micPerm = 'granted'; paintVoice(); vMsg('حالا دکمه رو نگه دار و بگو.'); return; }
+    $('micLbl').textContent = 'منتظر اجازه‌ام…';
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream){
+      stream.getTracks().forEach(function(t){ t.stop(); });
+      micPerm = 'granted'; paintVoice();
+      vMsg('آماده‌ست! حالا دکمه رو نگه دار، بگو، ول کن.');
+    }).catch(function(err){
+      micPerm = 'denied'; paintVoice();
+      vMsg(err && err.name === 'NotAllowedError' && !micPolicy ? BLOCKED_MSG
+        : err && err.name === 'NotFoundError' ? 'میکروفونی پیدا نشد.'
+        : 'اجازه‌ی میکروفون داده نشد. از تنظیمات مرورگر اجازه بده، یا از میکروفونِ کیبورد استفاده کن.');
+      try { $('vInput').focus({ preventScroll: true }); } catch (e) {}
+    });
+  }
+  // all final pieces → candidate sentences (best guess first, then the other guesses for the last piece)
+  function combine(parts){
+    if (!parts.length) return [];
+    var head = parts.slice(0, -1).map(function(p){ return p[0]; }).join(' ');
+    var out = parts[parts.length - 1].map(function(alt){ return (head + ' ' + alt).trim(); });
+    return out.filter(function(t, i){ return t && out.indexOf(t) === i; });
+  }
+  function startHold(e){
+    if (e && e.cancelable) e.preventDefault();
+    if (!G || G.answered || !micUsable || listening) return;
+    if (micPerm !== 'granted') { askPermission(); return; }
+    var id = ++recId;
+    try { rec = new SR(); } catch (er) { micUsable = false; paintVoice(); return; }
+    rec.lang = 'fa-IR'; rec.interimResults = true; rec.maxAlternatives = 5; rec.continuous = true;
+    finals = []; pressing = true; audioOn = false; holdStart = Date.now();
+    rec.onaudiostart = function(){
+      if (id !== recId) return;
+      audioOn = true; micPerm = 'granted'; holdStart = Date.now(); paintVoice();
+      try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
+    };
+    rec.onresult = function(ev){
+      if (id !== recId) return;
+      var shown = ''; finals = [];
+      for (var r = 0; r < ev.results.length; r++) {
+        var res = ev.results[r]; shown += res[0].transcript + ' ';
+        if (res.isFinal) { var alts = []; for (var a = 0; a < res.length; a++) alts.push(res[a].transcript); finals.push(alts); }
+      }
+      $('vInput').value = shown.trim();
+    };
+    rec.onerror = function(ev){
+      if (id !== recId) return;
+      if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed' || ev.error === 'audio-capture') {
+        micPerm = 'denied'; vMsg(micPolicy ? 'اجازه‌ی میکروفون داده نشد. از تنظیمات مرورگر اجازه بده.' : BLOCKED_MSG);
+      } else if (ev.error === 'network') vMsg('برای تشخیص صدا اینترنت لازمه.');
+    };
+    rec.onend = function(){
+      if (id !== recId) return;
+      var hadAudio = audioOn;
+      listening = false; pressing = false; audioOn = false; paintVoice();
+      if (!G || G.answered) return;
+      var texts = combine(finals);
+      if (!texts.length) { var v = $('vInput').value.trim(); if (v) texts = [v]; }
+      if (texts.length) tryVoice(texts);
+      else if (micPerm === 'denied') return;
+      else if (!hadAudio) vMsg(ALLOW_MSG);
+      else if (Date.now() - holdStart < 700) vMsg('دکمه رو نگه دار؛ وقتی قرمز شد حرف بزن، بعد ول کن.');
+      else vMsg('صدایی نشنیدم. دوباره نگه دار و بگو.');
+    };
+    try { rec.start(); listening = true; vMsg(''); $('vInput').value = ''; paintVoice(); }
+    catch (er) { listening = false; pressing = false; paintVoice(); }
+  }
+  function endHold(){
+    if (!pressing) return;
+    pressing = false;
+    if (!audioOn) {
+      recId++;
+      if (rec) { try { rec.abort(); } catch (e) {} }
+      listening = false; paintVoice();
+      vMsg(ALLOW_MSG);
+      return;
+    }
+    var r = rec, held = Date.now() - holdStart;
+    // a short tail so the last syllable is not cut off
+    setTimeout(function(){ if (r && listening) { try { r.stop(); } catch (e) {} } }, held < 500 ? 350 : 200);
+  }
+  (function(){
+    var mb = $('micBtn');
+    mb.addEventListener('pointerdown', function(e){
+      if (e.button > 0) return;
+      try { mb.setPointerCapture(e.pointerId); } catch (er) {}
+      startHold(e);
+    });
+    mb.addEventListener('pointerup', endHold);
+    mb.addEventListener('pointercancel', endHold);
+    mb.addEventListener('lostpointercapture', endHold);
+    mb.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+    mb.addEventListener('keydown', function(e){ if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); startHold(); } });
+    mb.addEventListener('keyup', function(e){ if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); endHold(); } });
+  })();
+  $('vForm').addEventListener('submit', function(e){
+    e.preventDefault(); clearTimeout(autoT);
+    if (!G) return;
+    if (G.answered) { next(); return; }
+    var v = $('vInput').value;
+    if (!v.trim()) { vMsg('اول جوابو بگو یا بنویس.'); return; }
+    tryVoice([v]);
+  });
+  // keyboard dictation types the words in; check by itself once it looks like a full name
+  $('vInput').addEventListener('input', function(){
+    clearTimeout(autoT); vMsg('');
+    var v = this.value;
+    if (!v.trim() || !G || G.answered) return;
+    autoT = setTimeout(function(){
+      if (!G || G.answered) return;
+      var r = judgeVoice([v], voiceNames(), currentAnswer());
+      if ((r.v === 'right' && r.score >= .8) || (r.v === 'wrong' && r.score >= .95) || r.v === 'dunno') tryVoice([v]);
+    }, 1300);
+  });
+  $('dunnoBtn').addEventListener('click', function(){ if (G && !G.answered) answer(-1, { ok: false, dunno: true, heard: '' }); });
+
+  /* ---------- wiring ---------- */
+  $('startBtn').addEventListener('click', function(){ newGame(rangeList(), false); });
+  $('againBtn').addEventListener('click', function(){ if (G) { setMode(G.mode); setAns(G.ans || 'choice'); setRange(G.ra, G.rb); } newGame(rangeList(), false); });
+  $('rangeBtn').addEventListener('click', function(){ show('scr-start'); });
+  $('practiceBtn').addEventListener('click', function(){ if (G && G.wrong.length) { setMode(G.mode); setAns(G.ans || 'choice'); newGame(G.wrong.slice(), true); } });
+
+  var FA_DIG = { '۱': 1, '۲': 2, '۳': 3, '1': 1, '2': 2, '3': 3 };
+  document.addEventListener('keydown', function(e){
+    if ($('scr-play').hidden || !G || G.ans === 'voice' || e.altKey || e.ctrlKey || e.metaKey) return;
+    var d = FA_DIG[e.key];
+    if (d && !G.answered && d <= G.opts.length) { e.preventDefault(); answer(d - 1); }
+  });
+
+  var hot = window.claude && window.claude.hot;
+  if (hot && typeof hot.snapshot === 'function') {
+    try { hot.snapshot(function(){ return { G: (G && !$('scr-play').hidden) ? G : null }; }); } catch (e) {}
+  }
+  function boot(data){
+    if (data && data.G && data.G.queue && data.G.qi < data.G.queue.length) {
+      G = data.G; if (G.mode !== 'rev') G.mode = 'fwd'; if (G.ans !== 'voice') G.ans = 'choice'; setMode(G.mode); setAns(G.ans); if (G.ra) setRange(G.ra, G.rb); show('scr-play'); ask();
+    } else show('scr-start');
+  }
+  setAns(ansWay);
+  setRange(range.a, range.b);
+  if (hot && typeof hot.ready === 'function') { try { hot.ready(boot); } catch (e) { boot({}); } }
+  else boot((hot && hot.data) || {});
+})();
+</script>
+
+</body>
+</html>

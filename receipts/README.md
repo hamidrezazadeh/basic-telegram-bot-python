@@ -11,7 +11,25 @@ PDF and image attachments are saved too. It only **reads** your mail.
 
 (IMAP is on by default for Gmail. If not: Gmail → Settings → Forwarding and POP/IMAP → Enable IMAP.)
 
-## 2. Add your accounts
+## 2. Easy way: the website
+
+```bash
+python3 web.py
+```
+
+Your browser opens http://127.0.0.1:8000. There you can:
+
+- add or remove Gmail accounts (email + app password)
+- choose a time range and press **Collect now**
+- search the results, open saved PDFs, and download the CSV
+
+The website runs only on your computer. Other computers cannot open it.
+Passwords are saved in `accounts.json` and are never sent back to the page.
+Press `Ctrl+C` in the terminal to stop it.
+
+## 3. Or use the command line
+
+### Add your accounts
 
 ```bash
 cp accounts.example.json accounts.json
@@ -20,7 +38,7 @@ cp accounts.example.json accounts.json
 Edit `accounts.json` and put your emails and app passwords.
 `accounts.json` is in `.gitignore`, so it is **not** pushed to GitHub.
 
-## 3. Run
+### Run
 
 ```bash
 python3 collect_receipts.py              # last 90 days

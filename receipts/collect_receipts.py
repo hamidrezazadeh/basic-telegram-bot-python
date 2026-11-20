@@ -29,6 +29,7 @@ AMOUNT_RE = re.compile(
     r"(?:(?:[$€£¥]|USD|EUR|GBP|CAD|AUD)\s?\d[\d,]*(?:\.\d{2})?"
     r"|\d[\d,]*\.\d{2}\s?(?:USD|EUR|GBP|CAD|AUD))"
 )
+FIELDS = ["date", "account", "from", "subject", "amount_guess", "attachments", "message_id"]
 TOTAL_RE = re.compile(r"(?:grand\s+)?total[^\n\d$€£¥]{0,30}", re.I)
 
 
@@ -128,7 +129,9 @@ def parse_message(raw, account, out_dir):
         "from": decode(msg.get("From")),
         "subject": subject,
         "amount_guess": guess_amount(body_text(msg)),
-        "attachments": "; ".join(save_attachments(msg, folder)),
+        "attachments": "; ".join(
+            os.path.relpath(p, out_dir) for p in save_attachments(msg, folder)
+        ),
     }
 
 
@@ -142,10 +145,10 @@ def find_all_mail(conn):
     return "INBOX"
 
 
-def collect_from_account(acc, query, out_dir):
+def collect_from_account(acc, query, out_dir, log=print):
     address = acc["email"]
     password = acc["app_password"].replace(" ", "")
-    print(f"[{address}] connecting...")
+    log(f"[{address}] connecting...")
     conn = imaplib.IMAP4_SSL(IMAP_HOST)
     try:
         conn.login(address, password)
@@ -153,7 +156,7 @@ def collect_from_account(acc, query, out_dir):
         # X-GM-RAW lets us use normal Gmail search words over IMAP.
         typ, data = conn.uid("SEARCH", "X-GM-RAW", f'"{query}"'.encode())
         uids = data[0].split() if data and data[0] else []
-        print(f"[{address}] found {len(uids)} emails")
+        log(f"[{address}] found {len(uids)} emails")
         rows = []
         for uid in uids:
             typ, parts = conn.uid("FETCH", uid, "(BODY.PEEK[])")
@@ -168,6 +171,52 @@ def collect_from_account(acc, query, out_dir):
             pass
 
 
+def build_query(days=90, query=None):
+    return (query or DEFAULT_QUERY.format(days=days)).replace('"', '\\"')
+
+
+def collect(accounts, query, out_dir, log=print):
+    """Collect receipts from all accounts. Writes receipts.csv/.json and returns rows."""
+    os.makedirs(out_dir, exist_ok=True)
+    all_rows, seen, ok = [], set(), 0
+    for acc in accounts:
+        try:
+            rows = collect_from_account(acc, query, out_dir, log)
+            ok += 1
+        except imaplib.IMAP4.error as e:
+            log(f"[{acc.get('email')}] login/search failed: {e}")
+            continue
+        except OSError as e:
+            log(f"[{acc.get('email')}] network error: {e}")
+            continue
+        for r in rows:  # same email sent to 2 accounts -> keep once
+            key = r["message_id"] or (r["account"], r["date"], r["subject"])
+            if key not in seen:
+                seen.add(key)
+                all_rows.append(r)
+
+    if not ok:
+        log("No account worked, so old results were kept.")
+        return None
+
+    all_rows.sort(key=lambda r: r["date"], reverse=True)
+    with open(os.path.join(out_dir, "receipts.csv"), "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=FIELDS)
+        w.writeheader()
+        w.writerows(all_rows)
+    with open(os.path.join(out_dir, "receipts.json"), "w", encoding="utf-8") as f:
+        json.dump(all_rows, f, ensure_ascii=False, indent=1)
+    log(f"Done: {len(all_rows)} receipts saved.")
+    return all_rows
+
+
+def load_accounts(path):
+    if not os.path.exists(path):
+        return []
+    with open(path) as f:
+        return json.load(f).get("accounts", [])
+
+
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
     ap = argparse.ArgumentParser(description="Collect receipts from many Gmail accounts.")
@@ -179,36 +228,8 @@ def main():
 
     if not os.path.exists(args.accounts):
         sys.exit(f"Missing {args.accounts}. Copy accounts.example.json to accounts.json and edit it.")
-    with open(args.accounts) as f:
-        accounts = json.load(f)["accounts"]
-
-    query = (args.query or DEFAULT_QUERY.format(days=args.days)).replace('"', '\\"')
-    os.makedirs(args.out, exist_ok=True)
-
-    all_rows, seen = [], set()
-    for acc in accounts:
-        try:
-            rows = collect_from_account(acc, query, args.out)
-        except imaplib.IMAP4.error as e:
-            print(f"[{acc.get('email')}] login/search failed: {e}")
-            continue
-        except OSError as e:
-            print(f"[{acc.get('email')}] network error: {e}")
-            continue
-        for r in rows:  # same email sent to 2 accounts -> keep once
-            key = r["message_id"] or (r["account"], r["date"], r["subject"])
-            if key not in seen:
-                seen.add(key)
-                all_rows.append(r)
-
-    all_rows.sort(key=lambda r: r["date"], reverse=True)
-    csv_path = os.path.join(args.out, "receipts.csv")
-    fields = ["date", "account", "from", "subject", "amount_guess", "attachments", "message_id"]
-    with open(csv_path, "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=fields)
-        w.writeheader()
-        w.writerows(all_rows)
-    print(f"\nDone: {len(all_rows)} receipts saved to {csv_path}")
+    collect(load_accounts(args.accounts), build_query(args.days, args.query), args.out)
+    print(f"CSV: {os.path.join(args.out, 'receipts.csv')}")
 
 
 if __name__ == "__main__":

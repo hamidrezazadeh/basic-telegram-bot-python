@@ -20,7 +20,7 @@ class ParseTest(unittest.TestCase):
             self.assertEqual(row["amount_guess"], "$125.00")
             self.assertEqual(row["date"], "2026-11-03 10:00")
             self.assertTrue(row["attachments"].endswith("receipt.pdf"))
-            self.assertTrue(os.path.exists(row["attachments"]))
+            self.assertTrue(os.path.exists(os.path.join(d, row["attachments"])))
 
     def test_amount_from_html(self):
         m = EmailMessage()

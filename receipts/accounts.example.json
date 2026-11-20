@@ -1,0 +1,6 @@
+{
+  "accounts": [
+    {"email": "first.account@gmail.com",  "app_password": "abcd efgh ijkl mnop"},
+    {"email": "second.account@gmail.com", "app_password": "qrst uvwx yzab cdef"}
+  ]
+}
